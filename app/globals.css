@@ -130,3 +130,9 @@ legend { font-weight: 600; font-size: 15px; margin-bottom: 8px; padding: 0; }
 }
 .prompt-row textarea { field-sizing: content; min-height: 48px; }
 .tabs span[aria-disabled="true"] { opacity: 0.55; cursor: default; }
+
+/* React adds hidden inputs at the start of forms that use server actions; they must not create a gap. */
+.stack-xs > input[type="hidden"] + *,
+.stack-s > input[type="hidden"] + *,
+.stack-m > input[type="hidden"] + *,
+.stack-l > input[type="hidden"] + * { margin-top: 0; }
