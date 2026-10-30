@@ -1,6 +1,7 @@
 "use server";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { siteUrl } from "@/lib/site";
 
 export type LoginState = { status: "idle" | "sent" | "error"; message?: string; email?: string };
 
@@ -14,7 +15,7 @@ export async function sendMagicLink(_prev: LoginState, formData: FormData): Prom
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { status: "error", message: "Enter a valid work email.", email };
 
   const h = await headers();
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}`;
+  const origin = siteUrl(`${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}`);
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({
     email,

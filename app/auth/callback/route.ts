@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { siteUrl } from "@/lib/site";
 
 // Magic-link landing (PKCE): exchanges ?code= for a session cookie.
 export async function GET(request: NextRequest) {
@@ -7,7 +8,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const nextParam = searchParams.get("next") ?? "/dashboard";
   const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/dashboard";
-  const base = process.env.NEXT_PUBLIC_SITE_URL || origin;
+  const base = siteUrl(origin);
 
   if (code) {
     const supabase = await createClient();

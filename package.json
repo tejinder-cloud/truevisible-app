@@ -11,7 +11,7 @@
     "build": "next build",
     "start": "next start -p ${PORT:-3000}",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test lib/**/*.test.ts",
+    "test": "tsx --test lib/*.test.ts lib/**/*.test.ts",
     "db:types": "npx supabase gen types typescript --project-id rmrauejublipukulnjou --schema public > lib/supabase/database.types.ts"
   },
   "dependencies": {
