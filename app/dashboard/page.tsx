@@ -21,7 +21,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const [prompts, competitors, lastRuns, openRecs, openHall, lastReport] = await Promise.all([
     supabase.from("prompts").select("id", { count: "exact", head: true }).eq("brand_id", brand.id).eq("status", "active"),
     supabase.from("competitors").select("id", { count: "exact", head: true }).eq("brand_id", brand.id).eq("status", "active"),
-    supabase.from("runs").select("engine, run_date, status").eq("brand_id", brand.id).order("run_date", { ascending: false }).limit(10),
+    supabase.from("runs").select("engine, run_date, status").eq("brand_id", brand.id).in("status", ["succeeded", "partial"]).order("run_date", { ascending: false }).limit(10),
     supabase.from("recommendations").select("id", { count: "exact", head: true }).eq("brand_id", brand.id).eq("status", "open"),
     supabase.from("hallucinations").select("id", { count: "exact", head: true }).eq("brand_id", brand.id).eq("status", "open"),
     supabase.from("reports").select("kind, created_at, url").eq("brand_id", brand.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
@@ -62,7 +62,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           <div className="card stack-xs"><p className="eyebrow">Visibility score</p><p className="stat"><Blank /></p><p className="small muted">Share of prompts where AI mentions you</p></div>
           <div className="card stack-xs"><p className="eyebrow">Share of voice</p><p className="stat"><Blank /></p><p className="small muted">{competitors.count ? <>You vs {competitors.count} {competitors.count === 1 ? "competitor" : "competitors"}</> : <a href="/onboarding?step=2">Add competitors to compare</a>}</p></div>
           <div className="card stack-xs"><p className="eyebrow">Sentiment</p><p className="stat"><Blank /></p><p className="small muted">How AI describes you</p></div>
-          <div className="card stack-xs"><p className="eyebrow">What AI gets wrong</p><p className="stat">{hasRuns ? openHall.count ?? 0 : <Blank />}</p><p className="small muted">Open wrong claims</p></div>
+          <div className="card stack-xs"><p className="eyebrow">What AI gets wrong</p><p className="stat"><Blank /></p><p className="small muted">Open wrong claims · checking starts soon</p></div>
         </section>
 
         <section className="grid-stats">
@@ -78,8 +78,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           </div>
           <div className="card stack-s">
             <h3>Recommendations</h3>
-            <p className="stat" style={{ fontSize: 36 }}>{hasRuns ? openRecs.count ?? 0 : <Blank />}</p>
-            <p className="small muted">Open, after your first audit.</p>
+            <p className="stat" style={{ fontSize: 36 }}>{openRecs.count ? openRecs.count : <Blank />}</p>
+            <p className="small muted">{openRecs.count ? "Open" : "Appear after your first audit."}</p>
           </div>
           <div className="card stack-s">
             <h3>Latest report</h3>
