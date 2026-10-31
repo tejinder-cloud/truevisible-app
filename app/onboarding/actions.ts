@@ -16,7 +16,7 @@ function fail(error: string): StepState {
 
 // ── Step 1: Brand ──────────────────────────────────────────────────────────
 export async function saveBrand(_prev: StepState, fd: FormData): Promise<StepState> {
-  const { supabase, tenantId, brand } = await getWorkspace();
+  const { supabase, user, tenantId, brand } = await getWorkspace();
   const name = String(fd.get("name") ?? "").trim();
   const platform = String(fd.get("site_platform") ?? "");
   const rawDomain = String(fd.get("primary_domain") ?? "");
@@ -67,6 +67,12 @@ export async function saveBrand(_prev: StepState, fd: FormData): Promise<StepSta
     if (error) return fail(`Couldn't save websites: ${error.message}`);
   }
   if (brand && brand.onboarding_step < 2) await supabase.from("brands").update({ onboarding_step: 2 }).eq("id", brandId);
+  // Name a fresh workspace after its first brand (was "My workspace", or an email domain like "gmail.com" before 31 Oct).
+  const emailDomain = user.email?.split("@")[1] ?? "";
+  const { data: tenant } = await supabase.from("tenants").select("name").eq("id", tenantId).maybeSingle();
+  if (tenant && (tenant.name === "My workspace" || tenant.name === emailDomain)) {
+    await supabase.from("tenants").update({ name }).eq("id", tenantId);
+  }
   redirect("/onboarding?step=2");
 }
 

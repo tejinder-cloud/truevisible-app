@@ -60,7 +60,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
         <section className="grid-stats" aria-label="Visibility summary">
           <div className="card stack-xs"><p className="eyebrow">Visibility score</p><p className="stat"><Blank /></p><p className="small muted">Share of prompts where AI mentions you</p></div>
-          <div className="card stack-xs"><p className="eyebrow">Share of voice</p><p className="stat"><Blank /></p><p className="small muted">You vs {competitors.count ?? 0} {competitors.count === 1 ? "competitor" : "competitors"}</p></div>
+          <div className="card stack-xs"><p className="eyebrow">Share of voice</p><p className="stat"><Blank /></p><p className="small muted">{competitors.count ? <>You vs {competitors.count} {competitors.count === 1 ? "competitor" : "competitors"}</> : <a href="/onboarding?step=2">Add competitors to compare</a>}</p></div>
           <div className="card stack-xs"><p className="eyebrow">Sentiment</p><p className="stat"><Blank /></p><p className="small muted">How AI describes you</p></div>
           <div className="card stack-xs"><p className="eyebrow">What AI gets wrong</p><p className="stat">{hasRuns ? openHall.count ?? 0 : <Blank />}</p><p className="small muted">Open wrong claims</p></div>
         </section>

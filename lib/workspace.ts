@@ -31,7 +31,8 @@ export async function getWorkspace() {
 
   let tenantId = member?.tenant_id as string | undefined;
   if (!tenantId) {
-    const { data, error } = await supabase.rpc("tv_bootstrap_tenant", { p_name: user.email?.split("@")[1] ?? null });
+    // Named "My workspace" until the first brand is saved, then renamed after it (see saveBrand).
+    const { data, error } = await supabase.rpc("tv_bootstrap_tenant", { p_name: null });
     if (error) throw new Error(`Could not create workspace: ${error.message}`);
     tenantId = data as string;
   }
