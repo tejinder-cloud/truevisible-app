@@ -2,7 +2,7 @@
 import { useActionState, useState } from "react";
 import { savePrompts, type StepState } from "./actions";
 import { draftPrompts, LANGUAGES, LANGUAGES_V2, type DraftPrompt, type Journey, type Language } from "@/lib/onboarding/prompts";
-import { SubmitButton } from "@/components/SubmitButton";
+import { QuestionFlow, type Question } from "@/components/QuestionFlow";
 
 type Row = DraftPrompt & { source: "template" | "user"; key: number };
 type Ctx = { brand: string; product: string; icp: string; location: string; competitor?: string };
@@ -29,76 +29,78 @@ export function PromptsStep({ ctx, limit, initialLanguages, initialPrompts }: {
   const update = (key: number, patch: Partial<Row>) =>
     setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch, source: patch.text !== undefined ? "user" : r.source } : r)));
 
-  return (
-    <form action={action} className="stack-l">
-      <header className="stack-xs">
-        <h1>The questions buyers <em className="accent">ask AI</em></h1>
-        <p className="muted">
-          We'll ask every engine these questions daily and record whether {ctx.brand} comes up. Your plan includes {limit} prompts.
-        </p>
-      </header>
-
-      <div className="card stack-s">
-        <fieldset>
-          <legend>Languages</legend>
+  const questions: Question[] = [
+    {
+      id: "languages",
+      title: <>Which languages do your buyers <em className="accent">ask AI</em> in?</>,
+      lead: "Pick all that apply. We'll draft questions in each.",
+      validate: () => (langs.length ? null : "Pick at least one language."),
+      onLeave: () => {
+        // Redraft only if the list is still untouched template drafts, so edits are never lost.
+        const drafted = new Set(rows.map((r) => r.language));
+        const changed = langs.length !== drafted.size || langs.some((l) => !drafted.has(l));
+        if (changed && rows.every((r) => r.source === "template")) redraft();
+      },
+      body: (
+        <div className="stack-s">
           <div className="row">
             {LANGUAGES.map((l) => (
-              <label key={l.id} className={`chip ${langs.includes(l.id) ? "on" : ""}`} style={{ cursor: "pointer" }}>
+              <label key={l.id} className={`chip chip-l ${langs.includes(l.id) ? "on" : ""}`} style={{ cursor: "pointer" }}>
                 <input type="checkbox" name="language" value={l.id} checked={langs.includes(l.id)} onChange={() => toggleLang(l.id)}
                   style={{ position: "absolute", opacity: 0, width: 1, height: 1 }} />
                 {langs.includes(l.id) ? "✓ " : "+ "}{l.label}
               </label>
             ))}
           </div>
-          <span className="hint">Coming later: {LANGUAGES_V2.join(", ")}.</span>
-        </fieldset>
-        <div className="row">
-          <button type="button" className="btn btn-secondary" onClick={redraft}>Redraft prompts for these languages</button>
+          <p className="hint">Coming later: {LANGUAGES_V2.join(", ")}.</p>
         </div>
-        <p className="hint">
-          Drafted from your answers ({ctx.product} · {ctx.icp} · {ctx.location}) using our question templates. Edit them freely — your words beat ours.
-        </p>
-      </div>
-
-      <div className="card">
-        <div className="spread" style={{ marginBottom: 8 }}>
-          <h3>Prompts</h3>
-          <span className={`small ${full ? "" : "muted"}`}>{rows.length} of {limit}</span>
-        </div>
-        {rows.length === 0 && <p className="muted small" style={{ padding: "12px 0" }}>No prompts yet. Redraft above or add your own.</p>}
-        {rows.map((r, i) => (
-          <div key={r.key} className="prompt-row">
-            <div>
-              <label className="sr-only" htmlFor={`p${r.key}`} style={{ position: "absolute", left: -9999 }}>Prompt {i + 1}</label>
-              <textarea id={`p${r.key}`} rows={3} value={r.text} onChange={(e) => update(r.key, { text: e.target.value })} lang={r.language === "hi" ? "hi" : "en"} />
-              <div className="meta">
-                <select aria-label="Language" value={r.language} onChange={(e) => update(r.key, { language: e.target.value as Language })}>
-                  {(Object.keys(LANG_LABEL) as Language[]).map((l) => <option key={l} value={l}>{LANG_LABEL[l]}</option>)}
-                </select>
-                <select aria-label="Buyer journey stage" value={r.journey_phase} onChange={(e) => update(r.key, { journey_phase: e.target.value as Journey })}>
-                  {(Object.keys(JOURNEY) as Journey[]).map((j) => <option key={j} value={j}>{JOURNEY[j]}</option>)}
-                </select>
+      ),
+    },
+    {
+      id: "prompts",
+      title: <>The questions we'll ask AI <em className="accent">every day</em></>,
+      lead: <>Drafted from your answers ({ctx.product} · {ctx.icp} · {ctx.location}) using our question templates. Edit them freely. Your plan includes {limit}.</>,
+      validate: () => (rows.filter((r) => r.text.trim().length >= 5).length ? null : "Add at least one question."),
+      body: (
+        <div className="card">
+          <div className="spread" style={{ marginBottom: 8 }}>
+            <button type="button" className="btn-link small" onClick={redraft}>Redraft all</button>
+            <span className={`small ${full ? "" : "muted"}`}>{rows.length} of {limit}</span>
+          </div>
+          {rows.length === 0 && <p className="muted small" style={{ padding: "12px 0" }}>No questions yet. Redraft or add your own.</p>}
+          {rows.map((r, i) => (
+            <div key={r.key} className="prompt-row">
+              <div>
+                <textarea aria-label={`Question ${i + 1}`} rows={3} value={r.text} onChange={(e) => update(r.key, { text: e.target.value })} lang={r.language === "hi" ? "hi" : "en"} />
+                <div className="meta">
+                  <select aria-label="Language" value={r.language} onChange={(e) => update(r.key, { language: e.target.value as Language })}>
+                    {(Object.keys(LANG_LABEL) as Language[]).map((l) => <option key={l} value={l}>{LANG_LABEL[l]}</option>)}
+                  </select>
+                  <select aria-label="Buyer journey stage" value={r.journey_phase} onChange={(e) => update(r.key, { journey_phase: e.target.value as Journey })}>
+                    {(Object.keys(JOURNEY) as Journey[]).map((j) => <option key={j} value={j}>{JOURNEY[j]}</option>)}
+                  </select>
+                </div>
               </div>
+              <button type="button" className="btn-link small" onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))} aria-label={`Remove question ${i + 1}`}>
+                Remove
+              </button>
             </div>
-            <button type="button" className="btn-link small" onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))} aria-label={`Remove prompt ${i + 1}`}>
-              Remove
+          ))}
+          <div style={{ paddingTop: 12 }}>
+            <button type="button" className="btn btn-secondary" disabled={full}
+              onClick={() => setRows((rs) => [...rs, withKey({ text: "", language: langs[0] ?? "en", journey_phase: "consideration" }, "user")])}>
+              {full ? `Plan limit reached (${limit})` : "+ Add your own"}
             </button>
           </div>
-        ))}
-        <div style={{ paddingTop: 12 }}>
-          <button type="button" className="btn btn-secondary" disabled={full}
-            onClick={() => setRows((rs) => [...rs, withKey({ text: "", language: langs[0] ?? "en", journey_phase: "consideration" }, "user")])}>
-            {full ? `Plan limit reached (${limit})` : "+ Add your own"}
-          </button>
+          <input type="hidden" name="prompts" value={JSON.stringify(rows.map(({ text, language, journey_phase, source }) => ({ text, language, journey_phase, source })))} />
         </div>
-      </div>
+      ),
+    },
+  ];
 
-      <input type="hidden" name="prompts" value={JSON.stringify(rows.map(({ text, language, journey_phase, source }) => ({ text, language, journey_phase, source })))} />
-      {state.error && <p className="error" role="alert">{state.error}</p>}
-      <div className="spread">
-        <a className="btn btn-secondary" href="/onboarding?step=2">Back</a>
-        <SubmitButton pending="Saving…">Finish setup</SubmitButton>
-      </div>
+  return (
+    <form action={action}>
+      <QuestionFlow questions={questions} submitLabel="Finish setup" pendingLabel="Saving…" serverError={state.error} backHref="/onboarding?step=2" />
     </form>
   );
 }

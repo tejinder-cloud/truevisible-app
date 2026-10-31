@@ -136,3 +136,18 @@ legend { font-weight: 600; font-size: 15px; margin-bottom: 8px; padding: 0; }
 .stack-s > input[type="hidden"] + *,
 .stack-m > input[type="hidden"] + *,
 .stack-l > input[type="hidden"] + * { margin-top: 0; }
+
+/* one-question-at-a-time flow */
+.qflow { display: flex; flex-direction: column; gap: 24px; }
+.qflow-meter { display: flex; gap: 4px; }
+.qflow-meter span { flex: 1; height: 4px; border-radius: 2px; background: var(--hairline); transition: background var(--dur) var(--ease); }
+.qflow-meter span.done { background: var(--green); }
+.qflow-meter span.on { background: var(--coral); }
+.q-title { font-size: clamp(28px, 4.5vw, 44px); line-height: 1.1; }
+.qflow input[type="text"], .qflow input[type="url"] { font-size: 20px; min-height: 60px; padding: 14px 18px; }
+.qflow-nav { margin-top: 8px; }
+.qflow-hint { display: none; }
+@media (hover: hover) and (min-width: 900px) { .qflow-hint { display: block; } }
+kbd { font-family: inherit; font-size: 12px; border: 1px solid var(--hairline); border-bottom-width: 2px; border-radius: 6px; padding: 1px 6px; background: var(--card); }
+.qflow section[hidden] { display: none; }
+.chip-l { font-size: 16px; padding: 10px 16px; min-height: 44px; }

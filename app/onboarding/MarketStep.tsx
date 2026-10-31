@@ -1,49 +1,57 @@
 "use client";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { saveMarket, type StepState } from "./actions";
-import { SubmitButton } from "@/components/SubmitButton";
+import { QuestionFlow, type Question } from "@/components/QuestionFlow";
 
 type Initial = { competitors: string; product: string; icp: string; location: string };
+const need = (field: string, msg: string) => (fd: FormData) => (String(fd.get(field) ?? "").trim().length < 2 ? msg : null);
 
 export function MarketStep({ brandName, initial }: { brandName: string; initial: Initial }) {
   const [state, action] = useActionState<StepState, FormData>(saveMarket, {});
+  const [product, setProduct] = useState(initial.product);
+  const [location, setLocation] = useState(initial.location);
+  const p = product.trim() || "it";
+
+  const questions: Question[] = [
+    {
+      id: "product",
+      title: <>What should AI <em className="accent">recommend</em> {brandName} for?</>,
+      lead: "One product or service to start. You can add more after setup.",
+      validate: need("product", "Add the product or service you want to be found for."),
+      body: <input type="text" name="product" aria-label="Product or service" value={product} onChange={(e) => setProduct(e.target.value)} placeholder="e.g. nursing entrance coaching" />,
+    },
+    {
+      id: "icp",
+      title: <>Who buys {p}?</>,
+      lead: "Describe them the way they'd describe themselves.",
+      validate: need("icp", "Add who buys it."),
+      body: <input type="text" name="icp" aria-label="Who buys it" defaultValue={initial.icp} placeholder="e.g. BSc nursing aspirants and their parents" />,
+    },
+    {
+      id: "location",
+      title: <>Where do they buy?</>,
+      lead: "A city or area. Buyers ask AI “best … in Mohali”, so city-level questions matter most.",
+      validate: need("location", "Add the city or area you serve."),
+      body: <input type="text" name="location" aria-label="City or area" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Mohali" />,
+    },
+    {
+      id: "competitors",
+      optional: true,
+      isEmpty: (fd) => !String(fd.get("competitors") ?? "").trim(),
+      title: <>Who do you lose customers to{location.trim() ? ` in ${location.trim()}` : ""}?</>,
+      lead: "One per line, with their website if you know it. Up to 10.",
+      body: (
+        <div className="stack-s">
+          <textarea name="competitors" aria-label="Competitors" defaultValue={initial.competitors} rows={5} placeholder={"ABC Academy — abcacademy.in\nXYZ Institute"} />
+          <p className="notice">Before your first audit, our setup team checks your category, competitors and prompts against what AI engines actually say, so your report compares you with the right businesses.</p>
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <form action={action} className="stack-l">
-      <header className="stack-xs">
-        <h1>Who you <em className="accent">compete</em> with</h1>
-        <p className="muted">One product, one buyer, one place to start. You can add more after setup.</p>
-      </header>
-
-      <div className="card stack-m">
-        <label className="field">
-          <span className="label">What do you want AI to recommend {brandName} for?</span>
-          <input type="text" name="product" required defaultValue={initial.product} placeholder="e.g. nursing entrance coaching" />
-        </label>
-        <label className="field">
-          <span className="label">Who buys it?</span>
-          <input type="text" name="icp" required defaultValue={initial.icp} placeholder="e.g. BSc nursing aspirants and their parents" />
-        </label>
-        <label className="field">
-          <span className="label">Where?</span>
-          <input type="text" name="location" required defaultValue={initial.location} placeholder="e.g. Mohali" />
-          <span className="hint">A city or area. Buyers ask AI “best … in Mohali”, so city-level questions matter most.</span>
-        </label>
-      </div>
-
-      <div className="card stack-s">
-        <label className="field">
-          <span className="label">Competitors</span>
-          <textarea name="competitors" defaultValue={initial.competitors} rows={5} placeholder={"One per line: name — website\ne.g. ABC Academy — abcacademy.in"} />
-          <span className="hint">The businesses you lose customers to. Up to 10.</span>
-        </label>
-        <p className="notice">Before your first audit, our setup team checks your category, competitors and prompts against what AI engines actually say — so your report compares you with the right businesses.</p>
-      </div>
-
-      {state.error && <p className="error" role="alert">{state.error}</p>}
-      <div className="spread">
-        <a className="btn btn-secondary" href="/onboarding?step=1">Back</a>
-        <SubmitButton pending="Saving…">Continue</SubmitButton>
-      </div>
+    <form action={action}>
+      <QuestionFlow questions={questions} submitLabel="Continue" pendingLabel="Saving…" serverError={state.error} backHref="/onboarding?step=1" />
     </form>
   );
 }
