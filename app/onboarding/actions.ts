@@ -161,7 +161,7 @@ export async function savePrompts(_prev: StepState, fd: FormData): Promise<StepS
 
   const upd = await supabase
     .from("brands")
-    .update({ languages, onboarding_step: 4, setup_status: "pending_verification" })
+    .update({ languages, onboarding_step: 4, setup_status: "pending_verification", setup_note: null })
     .eq("id", brand.id);
   if (upd.error) return fail(`Couldn't finish setup: ${upd.error.message}`);
   redirect("/dashboard?welcome=1");

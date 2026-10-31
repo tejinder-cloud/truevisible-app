@@ -42,21 +42,35 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           {TABS.map((t) => (t === "Overview" ? <span key={t} className="active" aria-current="page">{t}</span> : <span key={t} aria-disabled="true" title="Coming in the next build">{t}</span>))}
         </nav>
 
-        {brand.setup_status !== "verified" && (
+        {brand.setup_status === "needs_changes" ? (
           <section className="card ink stack-s" aria-live="polite">
-            <p className="eyebrow" style={{ color: "var(--on-dark)", opacity: 0.75 }}>{welcome ? "Setup received" : "Setup status"}</p>
-            <h2>{brand.setup_status === "needs_changes" ? "We need a quick word about your setup." : "We're checking your setup before the first audit."}</h2>
-            <p style={{ opacity: 0.85 }}>
-              A TGL specialist reviews your competitors and prompts against what AI engines actually say. Once that's done, the first audit runs across every engine and your
-              report lands in your inbox. Until then, this page stays blank on purpose — we don't show numbers we haven't measured.
-            </p>
+            <p className="eyebrow" style={{ color: "var(--on-dark)", opacity: 0.75 }}>One thing before your first audit</p>
+            <h2>We need a small change to your setup.</h2>
+            {brand.setup_note && <p style={{ opacity: 0.9, borderLeft: "3px solid var(--amber)", paddingLeft: 12 }}>{brand.setup_note}</p>}
+            <p style={{ opacity: 0.85 }}>Update it and we&apos;ll check again straight away.</p>
             <div className="row">
-              <Link className="btn btn-on-dark" href="/onboarding?step=1" style={{ background: "var(--cream)", color: "var(--ink)" }}>
-                Review my setup
-              </Link>
+              <Link className="btn" href="/onboarding?step=1" style={{ background: "var(--cream)", color: "var(--ink)" }}>Update my setup</Link>
             </div>
           </section>
-        )}
+        ) : brand.setup_status !== "verified" ? (
+          <section className="card ink stack-s" aria-live="polite">
+            <p className="eyebrow" style={{ color: "var(--on-dark)", opacity: 0.75 }}>{welcome ? "Setup received" : "Setup status"}</p>
+            <h2>We&apos;re checking your setup before the first audit.</h2>
+            <p style={{ opacity: 0.85 }}>
+              A TGL specialist reviews your competitors and prompts against what AI engines actually say. Once that&apos;s done, the first audit runs across every engine.
+              Until then, this page stays blank on purpose — we don&apos;t show numbers we haven&apos;t measured.
+            </p>
+            <div className="row">
+              <Link className="btn" href="/onboarding?step=1" style={{ background: "var(--cream)", color: "var(--ink)" }}>Review my setup</Link>
+            </div>
+          </section>
+        ) : !hasRuns ? (
+          <section className="card ink stack-s" aria-live="polite">
+            <p className="eyebrow" style={{ color: "var(--on-dark)", opacity: 0.75 }}>Setup verified</p>
+            <h2>Your first audit is running.</h2>
+            <p style={{ opacity: 0.85 }}>We&apos;re asking every engine your questions now. Results appear here as each engine finishes — usually within the hour.</p>
+          </section>
+        ) : null}
 
         <section className="grid-stats" aria-label="Visibility summary">
           <div className="card stack-xs"><p className="eyebrow">Visibility score</p><p className="stat"><Blank /></p><p className="small muted">Share of prompts where AI mentions you</p></div>

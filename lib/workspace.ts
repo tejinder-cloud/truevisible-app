@@ -10,6 +10,7 @@ export type Brand = {
   languages: string[];
   onboarding_step: number;
   setup_status: string;
+  setup_note: string | null;
 };
 export type Subscription = { plan: string; status: string; trial_ends_at: string | null };
 
@@ -40,7 +41,7 @@ export async function getWorkspace() {
   const [{ data: brand }, { data: sub }] = await Promise.all([
     supabase
       .from("brands")
-      .select("id, tenant_id, name, primary_domain, site_platform, languages, onboarding_step, setup_status")
+      .select("id, tenant_id, name, primary_domain, site_platform, languages, onboarding_step, setup_status, setup_note")
       .eq("tenant_id", tenantId)
       .order("created_at")
       .limit(1)
