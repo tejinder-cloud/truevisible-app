@@ -43,6 +43,14 @@ export function VisibilityChart({ series }: { series: Series[] }) {
   }
 
   const hd = hover != null ? dates[hover] : null;
+  // Identical series draw on top of each other; say so instead of letting a line silently disappear.
+  const sig = (x: Series) => x.points.map((p) => `${p.date}:${p.pct}`).join("|");
+  const groups = new Map<string, string[]>();
+  for (const x of series) groups.set(sig(x), [...(groups.get(sig(x)) ?? []), x.label]);
+  const same = [...groups.values()].filter((g) => g.length > 1);
+  const overlapNote = same.length
+    ? same.map((g) => `${g.join(" and ").replace(/ and (?=.* and )/g, ", ")} have identical results, so their lines overlap.`).join(" ")
+    : null;
   return (
     <div className="viz">
       <ul className="legend" aria-label="Engines">
@@ -90,6 +98,7 @@ export function VisibilityChart({ series }: { series: Series[] }) {
           </div>
         )}
       </div>
+      {overlapNote && <p className="small muted">{overlapNote}</p>}
       <details className="viz-table">
         <summary>Show as a table</summary>
         <table>

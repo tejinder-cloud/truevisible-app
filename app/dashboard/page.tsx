@@ -5,7 +5,7 @@ import { TopBar } from "@/components/TopBar";
 import { Meter } from "@/components/Meter";
 import { VisibilityChart } from "@/components/VisibilityChart";
 import {
-  brandedSplit, CHANNEL_LABEL, ENGINE_LABEL, latestDate, overallOn, seriesByEngine, shareOfVoice, topSources,
+  brandedSplit, CHANNEL_LABEL, ENGINE_LABEL, ENGINE_ORDER, latestDate, overallOn, seriesByEngine, shareOfVoice, topSources,
   type DailyRow, type DomainRow, type LatestAnswer,
 } from "@/lib/overview";
 
@@ -61,7 +61,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const sov = shareOfVoice(latest, competitorNames);
   const sources = topSources(domains);
   const series = seriesByEngine(rows).map((x) => ({ ...x, label: ENGINE_LABEL[x.engine] ?? x.engine, color: ENGINE_COLOR[x.engine] ?? "var(--eng-other)" }));
-  const enginesOnDay = [...new Set(latest.map((a) => a.engine))].map((e) => ENGINE_LABEL[e] ?? e);
+  const enginesOnDay = ENGINE_ORDER.filter((e) => latest.some((a) => a.engine === e)).map((e) => ENGINE_LABEL[e] ?? e);
 
   return (
     <>
@@ -79,9 +79,13 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         {brand.setup_status === "needs_changes" ? (
           <section className="card ink stack-s" aria-live="polite">
             <p className="eyebrow" style={{ color: "var(--on-dark)", opacity: 0.75 }}>{hasRuns ? "Your setup" : "One thing before your first audit"}</p>
-            <h2>We need a small change to your setup.</h2>
-            {brand.setup_note && <p style={{ opacity: 0.9, borderLeft: "3px solid var(--amber)", paddingLeft: 12 }}>{brand.setup_note}</p>}
-            <p style={{ opacity: 0.85 }}>Update it and we&apos;ll check again straight away.</p>
+            <h2>{brand.setup_note ? "We need a small change to your setup." : "We’re refining your setup."}</h2>
+            {brand.setup_note ? (
+              <p style={{ opacity: 0.9, borderLeft: "3px solid var(--amber)", paddingLeft: 12 }}>{brand.setup_note}</p>
+            ) : (
+              <p style={{ opacity: 0.9 }}>We&apos;re refining your competitors and questions so your audit compares you with the right businesses. You don&apos;t need to do anything — we&apos;ll update this page when it&apos;s done.</p>
+            )}
+            {brand.setup_note && <p style={{ opacity: 0.85 }}>Update it and we&apos;ll check again straight away.</p>}
             <div className="row">
               <Link className="btn" href="/onboarding?step=1" style={{ background: "var(--cream)", color: "var(--ink)" }}>Update my setup</Link>
             </div>
