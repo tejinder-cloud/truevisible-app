@@ -151,3 +151,33 @@ legend { font-weight: 600; font-size: 15px; margin-bottom: 8px; padding: 0; }
 kbd { font-family: inherit; font-size: 12px; border: 1px solid var(--hairline); border-bottom-width: 2px; border-radius: 6px; padding: 1px 6px; background: var(--card); }
 .qflow section[hidden] { display: none; }
 .chip-l { font-size: 16px; padding: 10px 16px; min-height: 44px; }
+
+/* engines — validated 3 Nov (dataviz validator, light, on #FFFFFF): passes; CVD coral↔teal 6.7 and amber contrast 2.35:1
+   → secondary encoding required and provided: direct end labels, legend, table view. */
+:root { --eng-chatgpt: #D9644A; --eng-gemini: #00897B; --eng-perplexity: #D6A02A; --eng-other: #6B625B; }
+
+.meter { margin: 0; display: grid; gap: 4px; }
+.meter svg { width: 100%; max-width: 220px; height: auto; display: block; }
+.meter figcaption { display: grid; gap: 2px; }
+
+.viz { display: grid; gap: 12px; }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; list-style: none; margin: 0; padding: 0; font-size: 14px; color: var(--text-2); }
+.legend li { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+.legend .swatch { margin-right: 0; }
+.viz-plot { position: relative; }
+.viz-plot svg { width: 100%; height: auto; display: block; overflow: visible; }
+.viz-axis { font-size: 11px; fill: var(--text-2); font-family: var(--font-body), sans-serif; }
+.viz-label { font-size: 12px; fill: var(--text); font-family: var(--font-body), sans-serif; font-weight: 600; }
+.viz-tip { position: absolute; top: 0; transform: translateX(-50%); background: var(--card); border: 1px solid var(--hairline); border-radius: 10px;
+  box-shadow: var(--shadow-card); padding: 8px 10px; font-size: 13px; pointer-events: none; white-space: nowrap; display: grid; gap: 2px; }
+.viz-table summary { cursor: pointer; font-size: 14px; color: var(--text-2); }
+.viz-table table, .data-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+.viz-table th, .viz-table td, .data-table th, .data-table td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--hairline); font-weight: 400; }
+.viz-table thead th, .data-table thead th { color: var(--text-2); font-weight: 600; font-size: 13px; }
+.bar-track { height: 8px; background: var(--cream-deep); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; background: var(--ink); }
+.bar-fill.brand { background: var(--coral); }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.chip.channel { font-size: 12px; padding: 2px 8px; }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
