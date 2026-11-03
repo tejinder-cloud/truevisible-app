@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 
 const LABEL: Record<string, string> = { chatgpt: "ChatGPT", gemini: "Gemini", perplexity: "Perplexity", ai_overviews: "AI Overviews", copilot: "Copilot" };
 const ORDER = ["chatgpt", "gemini", "perplexity", "ai_overviews", "copilot"];
-type Run = { id: string; engine: string; status: string };
+type Run = { id: string; engine: string; status: string; created_at: string };
 
 export function AuditProgress({ brandId, submittedAt, promptCount, updating }: { brandId: string; submittedAt: string; promptCount: number; updating: boolean }) {
   const router = useRouter();
@@ -20,8 +20,11 @@ export function AuditProgress({ brandId, submittedAt, promptCount, updating }: {
     const sb = createClient();
     let stop = false;
     async function tick() {
-      const { data: r } = await sb.from("runs").select("id, engine, status").eq("brand_id", brandId).gte("created_at", submittedAt);
-      const list = (r ?? []) as Run[];
+      const { data: r } = await sb.from("runs").select("id, engine, status, created_at").eq("brand_id", brandId).gte("created_at", submittedAt).order("created_at");
+      // A retried audit (after a restart cut one off) supersedes earlier attempts: show the latest attempt only.
+      const all = (r ?? []) as Run[];
+      const latestStart = all.length ? all[all.length - 1].created_at.slice(0, 16) : null;
+      const list = latestStart ? all.filter((x) => x.created_at.slice(0, 16) === latestStart) : [];
       const counts: Record<string, number> = {};
       if (list.length) {
         const { data: a } = await sb.from("answers").select("run_id").in("run_id", list.map((x) => x.id)).limit(1000);
@@ -30,7 +33,8 @@ export function AuditProgress({ brandId, submittedAt, promptCount, updating }: {
       if (stop) return;
       setRuns(list);
       setDone(counts);
-      if (list.length && list.every((x) => x.status !== "running" && x.status !== "queued") && !finished.current) {
+      const anyDone = list.some((x) => x.status === "succeeded" || x.status === "partial");
+      if (list.length && anyDone && list.every((x) => x.status !== "running" && x.status !== "queued") && !finished.current) {
         finished.current = true;
         router.refresh();
       }
@@ -42,7 +46,8 @@ export function AuditProgress({ brandId, submittedAt, promptCount, updating }: {
     return () => { stop = true; clearInterval(poll); clearInterval(clock); };
   }, [brandId, submittedAt, router]);
 
-  const elapsed = now == null ? 0 : Math.max(0, Math.floor((now - Date.parse(submittedAt)) / 1000));
+  const startedAt = runs.length ? runs[0].created_at : submittedAt; // clock counts from when this attempt started
+  const elapsed = now == null ? 0 : Math.max(0, Math.floor((now - Date.parse(startedAt)) / 1000));
   const mmss = now == null ? "" : `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")}`;
   const engines = ORDER.filter((e) => runs.some((r) => r.engine === e));
   const total = promptCount * Math.max(engines.length, 1);
@@ -67,7 +72,7 @@ export function AuditProgress({ brandId, submittedAt, promptCount, updating }: {
             const r = runs.filter((x) => x.engine === e).at(-1)!;
             const n = done[r.id] ?? 0;
             const pct = Math.min(100, Math.round((n / Math.max(promptCount, 1)) * 100));
-            const state = r.status === "running" ? `${n} of ${promptCount}` : r.status === "failed" ? "Couldn't finish — we'll retry" : "Done";
+            const state = r.status === "running" ? `${n} of ${promptCount}` : r.status === "failed" ? "Retrying…" : "Done";
             return (
               <li key={e}>
                 <span className="progress-name">{LABEL[e] ?? e}</span>
