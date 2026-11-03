@@ -4,6 +4,7 @@ import { getWorkspace, trialDaysLeft } from "@/lib/workspace";
 import { TopBar } from "@/components/TopBar";
 import { Meter } from "@/components/Meter";
 import { VisibilityChart } from "@/components/VisibilityChart";
+import { AuditProgress } from "@/components/AuditProgress";
 import {
   brandedSplit, CHANNEL_LABEL, ENGINE_LABEL, ENGINE_ORDER, latestDate, overallOn, seriesByEngine, shareOfVoice, topSources,
   type DailyRow, type DomainRow, type LatestAnswer,
@@ -34,6 +35,12 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     supabase.from("recommendations").select("id", { count: "exact", head: true }).eq("brand_id", brand.id).eq("status", "open"),
     supabase.from("reports").select("kind, created_at, url").eq("brand_id", brand.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
+  // First audit after a setup submission: in progress until every run created since the submission has finished.
+  let auditActive = false;
+  if (brand.setup_submitted_at && Date.now() - Date.parse(brand.setup_submitted_at) < 6 * 3600_000) {
+    const { data: since } = await supabase.from("runs").select("status").eq("brand_id", brand.id).gte("created_at", brand.setup_submitted_at);
+    auditActive = !since?.length || since.some((r) => r.status === "running" || r.status === "queued");
+  }
   const rows = (daily.data ?? []) as DailyRow[];
   const day = latestDate(rows);
   const hasRuns = day != null;
@@ -76,7 +83,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           {TABS.map((t) => (t === "Overview" ? <span key={t} className="active" aria-current="page">{t}</span> : <span key={t} aria-disabled="true" title="Coming in the next build">{t}</span>))}
         </nav>
 
-        {brand.setup_status === "needs_changes" ? (
+        {auditActive ? (
+          <AuditProgress brandId={brand.id} submittedAt={brand.setup_submitted_at!} promptCount={prompts.count ?? 0} updating={hasRuns} />
+        ) : brand.setup_status === "needs_changes" ? (
           <section className="card ink stack-s" aria-live="polite">
             <p className="eyebrow" style={{ color: "var(--on-dark)", opacity: 0.75 }}>{hasRuns ? "Your setup" : "One thing before your first audit"}</p>
             <h2>{brand.setup_note ? "We need a small change to your setup." : "We’re refining your setup."}</h2>
@@ -110,6 +119,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           </section>
         ) : null}
 
+        {hasRuns && !auditActive && brand.setup_status === "pending_verification" && (
+          <p className="notice">We&apos;re also checking your setup by hand and may refine your competitors and questions. Your numbers update when we do.</p>
+        )}
         {hasRuns && (
           <p className="small muted">
             Latest completed run: <strong>{fmtDay(day!)}</strong> · {enginesOnDay.join(", ")} · {latest.length} answers to {prompts.count ?? "—"} questions.

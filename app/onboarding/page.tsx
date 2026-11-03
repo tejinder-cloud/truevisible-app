@@ -57,7 +57,7 @@ export default async function Onboarding({ searchParams }: { searchParams: Promi
     const [{ data: pi }, { data: comps }, { data: prompts }] = await Promise.all([
       supabase.from("products_icps").select("product, icp, location").eq("brand_id", brand.id).order("created_at").limit(1).maybeSingle(),
       supabase.from("competitors").select("name").eq("brand_id", brand.id).order("created_at").limit(1),
-      supabase.from("prompts").select("text, language, journey_phase, source").eq("brand_id", brand.id).order("created_at"),
+      supabase.from("prompts").select("text, language, journey_phase, source").eq("brand_id", brand.id).eq("status", "active").order("created_at"),
     ]);
     if (!pi) redirect("/onboarding?step=2");
     content = (

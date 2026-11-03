@@ -181,3 +181,12 @@ kbd { font-family: inherit; font-size: 12px; border: 1px solid var(--hairline); 
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .chip.channel { font-size: 12px; padding: 2px 8px; }
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+
+/* first-audit progress (on ink card) */
+.progress-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.progress-list li { display: grid; grid-template-columns: 96px 1fr auto; gap: 12px; align-items: center; }
+.progress-name { font-weight: 600; font-size: 15px; }
+.progress-track { height: 8px; background: rgba(247, 243, 236, 0.18); border-radius: 4px; overflow: hidden; }
+.progress-bar { display: block; height: 100%; background: var(--cream); border-radius: 4px; transition: width 600ms var(--ease); }
+.progress-state { opacity: 0.85; min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .progress-bar { transition: none; } }

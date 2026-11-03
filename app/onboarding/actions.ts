@@ -143,25 +143,46 @@ export async function savePrompts(_prev: StepState, fd: FormData): Promise<StepS
   const languages = [...new Set([...selected, ...prompts.map((p) => p.language)])];
 
   const { data: pi } = await supabase.from("products_icps").select("id").eq("brand_id", brand.id).order("created_at").limit(1).maybeSingle();
-  const del = await supabase.from("prompts").delete().eq("brand_id", brand.id);
-  if (del.error) return fail("Couldn't update prompts. Try again.");
-  const { error } = await supabase.from("prompts").insert(
-    prompts.map((p) => ({
-      tenant_id: tenantId,
-      brand_id: brand.id,
-      product_icp_id: pi?.id ?? null,
-      text: p.text,
-      language: p.language,
-      journey_phase: p.journey_phase,
-      status: "active",
-      source: p.source === "template" ? "template" : "user",
-    }))
-  );
+  // Never delete a prompt: its answers are the brand's history (3 Nov 2026 data-loss fix; the database also refuses).
+  // Unchanged prompts keep their row (and history); removed ones are retired; new ones are added.
+  const key = (t: string) => t.toLowerCase().replace(/\s+/g, " ").trim();
+  const { data: current, error: curErr } = await supabase.from("prompts").select("id, text, language, journey_phase").eq("brand_id", brand.id).eq("status", "active");
+  if (curErr) return fail("Couldn't read your current prompts. Try again.");
+  const wanted = new Map(prompts.map((p) => [key(p.text), p]));
+  const keep = (current ?? []).filter((c) => wanted.has(key(c.text)));
+  const retire = (current ?? []).filter((c) => !wanted.has(key(c.text)));
+  if (retire.length) {
+    const r = await supabase.from("prompts").update({ status: "retired", retired_at: new Date().toISOString() }).in("id", retire.map((c) => c.id));
+    if (r.error) return fail("Couldn't update prompts. Try again.");
+  }
+  for (const c of keep) {
+    const w = wanted.get(key(c.text))!;
+    if (w.language !== c.language || w.journey_phase !== c.journey_phase) {
+      const u = await supabase.from("prompts").update({ language: w.language, journey_phase: w.journey_phase }).eq("id", c.id);
+      if (u.error) return fail("Couldn't update prompts. Try again.");
+    }
+  }
+  const keptKeys = new Set(keep.map((c) => key(c.text)));
+  const fresh = prompts.filter((p) => !keptKeys.has(key(p.text)));
+  const { error } = fresh.length
+    ? await supabase.from("prompts").insert(
+        fresh.map((p) => ({
+          tenant_id: tenantId,
+          brand_id: brand.id,
+          product_icp_id: pi?.id ?? null,
+          text: p.text,
+          language: p.language,
+          journey_phase: p.journey_phase,
+          status: "active",
+          source: p.source === "template" ? "template" : "user",
+        }))
+      )
+    : { error: null };
   if (error) return fail(`Couldn't save prompts: ${error.message}`);
 
   const upd = await supabase
     .from("brands")
-    .update({ languages, onboarding_step: 4, setup_status: "pending_verification", setup_note: null })
+    .update({ languages, onboarding_step: 4, setup_status: "pending_verification", setup_note: null, setup_submitted_at: new Date().toISOString() })
     .eq("id", brand.id);
   if (upd.error) return fail(`Couldn't finish setup: ${upd.error.message}`);
   redirect("/dashboard?welcome=1");
