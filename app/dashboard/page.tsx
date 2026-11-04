@@ -28,18 +28,31 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
   const since = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
   const [prompts, competitors, variants, daily, openRecs, lastReport] = await Promise.all([
-    supabase.from("prompts").select("id", { count: "exact", head: true }).eq("brand_id", brand.id).eq("status", "active"),
+    supabase.from("prompts").select("id").eq("brand_id", brand.id).eq("status", "active"),
     supabase.from("competitors").select("name").eq("brand_id", brand.id).eq("status", "active"),
     supabase.from("brand_variants").select("name").eq("brand_id", brand.id),
     supabase.from("v_visibility_daily").select("run_date, engine, answers, mentioned").eq("brand_id", brand.id).gte("run_date", since),
     supabase.from("recommendations").select("id", { count: "exact", head: true }).eq("brand_id", brand.id).eq("status", "open"),
     supabase.from("reports").select("kind, created_at, url").eq("brand_id", brand.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
-  // First audit after a setup submission: in progress until every run created since the submission has finished.
+  const activeIds = (prompts.data ?? []).map((p) => p.id as string);
+  const promptTotal = activeIds.length;
+  // First audit after a setup submission: in progress while any run since the submission is running, or any active
+  // question still has no answer (since the submission, or from today's runs — those aren't asked twice).
   let auditActive = false;
-  if (brand.setup_submitted_at && Date.now() - Date.parse(brand.setup_submitted_at) < 6 * 3600_000) {
-    const { data: since } = await supabase.from("runs").select("status").eq("brand_id", brand.id).gte("created_at", brand.setup_submitted_at);
-    auditActive = !since?.length || since.some((r) => r.status === "running" || r.status === "queued");
+  let toAsk = 0;
+  if (brand.setup_submitted_at && Date.now() - Date.parse(brand.setup_submitted_at) < 6 * 3600_000 && promptTotal) {
+    const todayIst = new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
+    const from = new Date(Math.min(Date.parse(brand.setup_submitted_at), Date.parse(`${todayIst}T00:00:00+05:30`))).toISOString();
+    const [{ data: runsSince }, { data: ansSince }] = await Promise.all([
+      supabase.from("runs").select("status").eq("brand_id", brand.id).gte("created_at", brand.setup_submitted_at),
+      supabase.from("answers").select("prompt_id, created_at, runs!inner(status)").eq("brand_id", brand.id).gte("created_at", from).in("runs.status", ["succeeded", "partial"]).limit(2000),
+    ]);
+    const all = new Set((ansSince ?? []).map((a: any) => a.prompt_id as string));
+    const before = new Set((ansSince ?? []).filter((a: any) => a.created_at < brand.setup_submitted_at!).map((a: any) => a.prompt_id as string));
+    toAsk = activeIds.filter((id) => !before.has(id)).length;          // what this audit asks (stable while it runs)
+    const unanswered = activeIds.filter((id) => !all.has(id)).length;
+    auditActive = unanswered > 0 || (runsSince ?? []).some((r) => r.status === "running" || r.status === "queued");
   }
   const rows = (daily.data ?? []) as DailyRow[];
   const day = latestDate(rows);
@@ -51,18 +64,22 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   // Latest day's answers (with their question) and cited domains — only completed runs (views and the inner join enforce it).
   let latest: LatestAnswer[] = [];
   let domains: DomainRow[] = [];
+  let latestIds: string[] = [];
   if (day) {
     const [ans, doms] = await Promise.all([
       supabase.from("answers")
-        .select("mentioned, competitors_mentioned, prompts(text), runs!inner(engine, run_date, status)")
+        .select("prompt_id, mentioned, competitors_mentioned, prompts(text), runs!inner(engine, run_date, status)")
         .eq("brand_id", brand.id).eq("runs.run_date", day).in("runs.status", ["succeeded", "partial"]).limit(1000),
       supabase.from("v_citation_domains_daily").select("domain, channel_type, owned, citations, answers").eq("brand_id", brand.id).eq("run_date", day).limit(1000),
     ]);
     latest = (ans.data ?? []).map((a: any) => ({
       engine: a.runs?.engine, mentioned: a.mentioned, competitors_mentioned: a.competitors_mentioned, prompt_text: a.prompts?.text ?? "",
     }));
+    latestIds = (ans.data ?? []).map((a: any) => a.prompt_id as string);
     domains = (doms.data ?? []) as DomainRow[];
   }
+  const activeSet = new Set(activeIds);
+  const answeredOnDay = new Set(latestIds.filter((id) => activeSet.has(id))).size;
   const overall = overallOn(rows, day);
   const split = brandedSplit(latest, brandNames);
   const sov = shareOfVoice(latest, competitorNames);
@@ -84,7 +101,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         </nav>
 
         {auditActive ? (
-          <AuditProgress brandId={brand.id} submittedAt={brand.setup_submitted_at!} promptCount={prompts.count ?? 0} updating={hasRuns} />
+          <AuditProgress brandId={brand.id} submittedAt={brand.setup_submitted_at!} promptCount={toAsk || promptTotal} updating={hasRuns} />
         ) : brand.setup_status === "needs_changes" ? (
           <section className="card ink stack-s" aria-live="polite">
             <p className="eyebrow" style={{ color: "var(--on-dark)", opacity: 0.75 }}>{hasRuns ? "Your setup" : "One thing before your first audit"}</p>
@@ -124,7 +141,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         )}
         {hasRuns && (
           <p className="small muted">
-            Latest completed run: <strong>{fmtDay(day!)}</strong> · {enginesOnDay.join(", ")} · {latest.length} answers to {prompts.count ?? "—"} questions.
+            Latest completed run: <strong>{fmtDay(day!)}</strong> · {enginesOnDay.join(", ")} · {latest.length} answers covering {answeredOnDay} of your {promptTotal} questions.
+            {answeredOnDay < promptTotal && !auditActive && ` The other ${promptTotal - answeredOnDay} are asked in the next daily run (6:00 AM).`}
             Answers come from each engine&apos;s API with web search on — close to, not identical with, what a person sees in the app.
           </p>
         )}
@@ -214,7 +232,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           <div className="card stack-xs"><p className="eyebrow">Latest report</p>{lastReport.data ? <p className="small">{lastReport.data.kind} · {new Date(lastReport.data.created_at).toLocaleDateString("en-IN")}</p> : <p className="stat" style={{ fontSize: 36 }}><Blank /></p>}<p className="small muted">Reports arrive by email and appear here.</p></div>
         </section>
 
-        <p className="small muted">Tracking {prompts.count ?? "—"} questions · {competitorNames.length} competitors · {brand.languages.map((l) => ({ en: "English", hi: "Hindi", hinglish: "Hinglish" } as Record<string, string>)[l] ?? l).join(", ")}</p>
+        <p className="small muted">Tracking {promptTotal} questions · {competitorNames.length} competitors · {brand.languages.map((l) => ({ en: "English", hi: "Hindi", hinglish: "Hinglish" } as Record<string, string>)[l] ?? l).join(", ")}</p>
       </main>
     </>
   );

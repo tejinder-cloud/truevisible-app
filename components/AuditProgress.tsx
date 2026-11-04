@@ -60,7 +60,7 @@ export function AuditProgress({ brandId, submittedAt, promptCount, updating }: {
         <p className="eyebrow" style={{ color: "var(--on-dark)", opacity: 0.75 }}>{updating ? "Updating your audit" : "Your first audit"}</p>
         <span className="small" style={{ opacity: 0.75, fontVariantNumeric: "tabular-nums" }}>{mmss}</span>
       </div>
-      <h2>{runs.length ? `Asking AI your ${promptCount} questions…` : "Starting your audit…"}</h2>
+      <h2>{runs.length ? `Asking AI your ${updating ? "new " : ""}${promptCount} question${promptCount === 1 ? "" : "s"}…` : "Starting your audit…"}</h2>
       <p style={{ opacity: 0.85 }}>
         {runs.length
           ? `${answered} of ${total} answers in. This page updates by itself — usually 2 to 4 minutes in all.`
