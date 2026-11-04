@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getWorkspace, trialDaysLeft } from "@/lib/workspace";
-import { TopBar } from "@/components/TopBar";
+import { DashboardShell } from "@/components/DashboardShell";
 import { Meter } from "@/components/Meter";
 import { VisibilityChart } from "@/components/VisibilityChart";
 import { AuditProgress } from "@/components/AuditProgress";
@@ -12,7 +12,6 @@ import {
 
 export const metadata = { title: "Overview" };
 
-const TABS = ["Overview", "Prompts", "Citations", "Recommendations", "Impact", "Reports", "Settings"];
 const ENGINE_COLOR: Record<string, string> = { chatgpt: "var(--eng-chatgpt)", gemini: "var(--eng-gemini)", perplexity: "var(--eng-perplexity)" };
 const fmtDay = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
@@ -88,18 +87,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const enginesOnDay = ENGINE_ORDER.filter((e) => latest.some((a) => a.engine === e)).map((e) => ENGINE_LABEL[e] ?? e);
 
   return (
-    <>
-      <TopBar email={user.email} trialDays={days} />
-      <main className="container stack-l" style={{ paddingTop: 32, paddingBottom: 96 }}>
-        <div className="stack-xs">
-          <p className="eyebrow">{brand.primary_domain ?? "No website"}</p>
-          <h1>{brand.name}</h1>
-        </div>
-
-        <nav className="tabs" aria-label="Dashboard">
-          {TABS.map((t) => (t === "Overview" ? <span key={t} className="active" aria-current="page">{t}</span> : <span key={t} aria-disabled="true" title="Coming in the next build">{t}</span>))}
-        </nav>
-
+      <DashboardShell active="Overview" email={user.email} trialDays={days} brandName={brand.name} domain={brand.primary_domain}>
         {auditActive ? (
           <AuditProgress brandId={brand.id} submittedAt={brand.setup_submitted_at!} promptCount={toAsk || promptTotal} updating={hasRuns} />
         ) : brand.setup_status === "needs_changes" ? (
@@ -233,7 +221,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         </section>
 
         <p className="small muted">Tracking {promptTotal} questions · {competitorNames.length} competitors · {brand.languages.map((l) => ({ en: "English", hi: "Hindi", hinglish: "Hinglish" } as Record<string, string>)[l] ?? l).join(", ")} · <Link href="/onboarding?step=1">Edit setup</Link></p>
-      </main>
-    </>
+      </DashboardShell>
+    
   );
 }
