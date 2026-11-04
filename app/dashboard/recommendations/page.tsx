@@ -66,7 +66,7 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
             <h2>What to do next</h2>
             <p className="muted">
               {open.length} to do{diy.length ? ` · ${diy.length} you're doing` : ""}{done.length ? ` · ${done.length} done` : ""}
-              {latestBatch && <> · written {new Date(latestBatch).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} from your latest answers · refreshed weekly</>}
+              {latestBatch && <> · written {new Date(latestBatch).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" })} from your latest answers · refreshed weekly</>}
             </p>
             <p className="small muted">Impact and effort are our estimate. The measured facts under each item come from your stored answers.</p>
           </section>

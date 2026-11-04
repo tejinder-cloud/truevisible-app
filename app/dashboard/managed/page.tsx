@@ -42,7 +42,7 @@ export default async function Managed({ searchParams }: { searchParams: Promise<
               <p className="eyebrow">Request received</p>
               <h3>Thanks — our team will be in touch.</h3>
               <p className="muted">We&apos;ll contact you at {user.email} to agree your 90-day plan and scope. Nothing is charged until you&apos;ve seen and accepted it.</p>
-              {req?.created_at && <p className="small muted">Requested {new Date(req.created_at).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</p>}
+              {req?.created_at && <p className="small muted">Requested {new Date(req.created_at).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" })}</p>}
               <Link className="btn btn-secondary" href="/dashboard/recommendations">Back to recommendations</Link>
             </>
           ) : (
