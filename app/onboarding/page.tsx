@@ -10,8 +10,7 @@ const STEPS = ["Brand", "Competitors & market", "Prompts"];
 
 export default async function Onboarding({ searchParams }: { searchParams: Promise<{ step?: string }> }) {
   const { supabase, user, brand, subscription } = await getWorkspace();
-  // Setup stays editable until TGL verifies it; after that, changes go through Settings.
-  if (brand && brand.setup_status === "verified") redirect("/dashboard");
+  // Setup stays editable after verification too (until Settings ships); finishing again sends it back for review.
 
   const finished = (brand?.onboarding_step ?? 1) >= 4;
   const reached = Math.min(brand?.onboarding_step ?? 1, 3);

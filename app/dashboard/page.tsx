@@ -232,7 +232,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           <div className="card stack-xs"><p className="eyebrow">Latest report</p>{lastReport.data ? <p className="small">{lastReport.data.kind} · {new Date(lastReport.data.created_at).toLocaleDateString("en-IN")}</p> : <p className="stat" style={{ fontSize: 36 }}><Blank /></p>}<p className="small muted">Reports arrive by email and appear here.</p></div>
         </section>
 
-        <p className="small muted">Tracking {promptTotal} questions · {competitorNames.length} competitors · {brand.languages.map((l) => ({ en: "English", hi: "Hindi", hinglish: "Hinglish" } as Record<string, string>)[l] ?? l).join(", ")}</p>
+        <p className="small muted">Tracking {promptTotal} questions · {competitorNames.length} competitors · {brand.languages.map((l) => ({ en: "English", hi: "Hindi", hinglish: "Hinglish" } as Record<string, string>)[l] ?? l).join(", ")} · <Link href="/onboarding?step=1">Edit setup</Link></p>
       </main>
     </>
   );
