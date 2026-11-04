@@ -13,7 +13,7 @@ export type Brand = {
   setup_note: string | null;
   setup_submitted_at: string | null;
 };
-export type Subscription = { plan: string; status: string; trial_ends_at: string | null };
+export type Subscription = { plan: string; status: string; trial_ends_at: string | null; extra_prompts?: number | null };
 
 /** Signed-in user + their tenant (created on first visit) + their brand (if started) + current TrueVisible subscription. */
 export async function getWorkspace() {
@@ -49,7 +49,7 @@ export async function getWorkspace() {
       .maybeSingle(),
     supabase
       .from("subscriptions")
-      .select("plan, status, trial_ends_at")
+      .select("plan, status, trial_ends_at, extra_prompts")
       .eq("tenant_id", tenantId)
       .eq("product", "truevisible")
       .is("brand_id", null)
@@ -66,7 +66,7 @@ export function promptLimit(sub: Subscription | null): number {
   if (!sub) return 0;
   if (sub.plan === "trial") return sub.status === "trialing" && sub.trial_ends_at && new Date(sub.trial_ends_at) > new Date() ? 10 : 0;
   if (sub.plan === "internal") return 50;
-  return ["active", "past_due"].includes(sub.status) ? 50 : 0;
+  return ["active", "past_due"].includes(sub.status) ? 25 + (sub.extra_prompts ?? 0) : 0;   // 25 + extra packs (decision 4 Nov 2026)
 }
 
 export function trialDaysLeft(sub: Subscription | null): number | null {
