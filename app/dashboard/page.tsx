@@ -216,7 +216,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <section className="grid-stats">
           <div className="card stack-xs"><p className="eyebrow">Sentiment</p><p className="stat" style={{ fontSize: 36 }}><Blank /></p><p className="small muted">How AI describes you · measuring starts soon</p></div>
           <div className="card stack-xs"><p className="eyebrow">What AI gets wrong</p><p className="stat" style={{ fontSize: 36 }}><Blank /></p><p className="small muted">Wrong claims about you · checking starts soon</p></div>
-          <div className="card stack-xs"><p className="eyebrow">Recommendations</p><p className="stat" style={{ fontSize: 36 }}>{openRecs.count ? openRecs.count : <Blank />}</p><p className="small muted">{openRecs.count ? "Open" : hasRuns ? "Not generated yet" : "Appear after your first audit"}</p></div>
+          <div className="card stack-xs"><p className="eyebrow">Recommendations</p><p className="stat" style={{ fontSize: 36 }}>{openRecs.count ? openRecs.count : <Blank />}</p><p className="small muted">{openRecs.count ? <Link href="/dashboard/recommendations">To do · see them</Link> : hasRuns && brand.setup_status === "verified" ? "Being written — usually within 30 minutes" : hasRuns ? "After our team checks your setup" : "Appear after your first audit"}</p></div>
           <div className="card stack-xs"><p className="eyebrow">Latest report</p>{lastReport.data ? <p className="small">{lastReport.data.kind} · {new Date(lastReport.data.created_at).toLocaleDateString("en-IN")}</p> : <p className="stat" style={{ fontSize: 36 }}><Blank /></p>}<p className="small muted">Reports arrive by email and appear here.</p></div>
         </section>
 
