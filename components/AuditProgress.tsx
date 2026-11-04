@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { AEO_FACTS } from "@/lib/aeoFacts";
 
 const LABEL: Record<string, string> = { chatgpt: "ChatGPT", gemini: "Gemini", perplexity: "Perplexity", ai_overviews: "AI Overviews", copilot: "Copilot" };
 const ORDER = ["chatgpt", "gemini", "perplexity", "ai_overviews", "copilot"];
@@ -15,6 +16,11 @@ export function AuditProgress({ brandId, submittedAt, promptCount, updating }: {
   const [done, setDone] = useState<Record<string, number>>({});
   const [now, setNow] = useState<number | null>(null); // set after mount: server and browser clocks differ (hydration)
   const finished = useRef(false);
+  const [fact, setFact] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setFact((i) => (i + 1) % AEO_FACTS.length), 9000);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     const sb = createClient();
@@ -83,6 +89,20 @@ export function AuditProgress({ brandId, submittedAt, promptCount, updating }: {
           })}
         </ul>
       )}
+      <aside className="fact" aria-live="off">
+        <div className="spread">
+          <p className="eyebrow" style={{ color: "var(--on-dark)", opacity: 0.75 }}>Did you know?</p>
+          <span className="fact-nav">
+            <button type="button" aria-label="Previous fact" onClick={() => setFact((i) => (i - 1 + AEO_FACTS.length) % AEO_FACTS.length)}>‹</button>
+            <span className="small" style={{ fontVariantNumeric: "tabular-nums", opacity: 0.75 }}>{fact + 1}/{AEO_FACTS.length}</span>
+            <button type="button" aria-label="Next fact" onClick={() => setFact((i) => (i + 1) % AEO_FACTS.length)}>›</button>
+          </span>
+        </div>
+        <p key={fact} className="fact-text">{AEO_FACTS[fact].text}</p>
+        <p className="small" style={{ opacity: 0.7 }}>
+          {AEO_FACTS[fact].url ? <a href={AEO_FACTS[fact].url} target="_blank" rel="noreferrer" style={{ color: "inherit" }}>{AEO_FACTS[fact].source}</a> : AEO_FACTS[fact].source}
+        </p>
+      </aside>
       {slow && <p className="small" style={{ opacity: 0.8 }}>This is taking longer than usual. You can leave this page — results will be here when you come back.</p>}
     </section>
   );

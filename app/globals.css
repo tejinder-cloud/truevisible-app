@@ -190,3 +190,12 @@ kbd { font-family: inherit; font-size: 12px; border: 1px solid var(--hairline); 
 .progress-bar { display: block; height: 100%; background: var(--cream); border-radius: 4px; transition: width 600ms var(--ease); }
 .progress-state { opacity: 0.85; min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) { .progress-bar { transition: none; } }
+
+/* "Did you know?" facts inside the audit progress card */
+.fact { border-top: 1px solid rgba(255,255,255,0.15); padding-top: 16px; display: grid; gap: 6px; }
+.fact-text { font-size: 17px; line-height: 1.45; animation: fact-in 400ms ease; }
+.fact-nav { display: inline-flex; align-items: center; gap: 6px; }
+.fact-nav button { background: none; border: 1px solid rgba(255,255,255,0.3); color: var(--on-dark); border-radius: 999px; width: 28px; height: 28px; cursor: pointer; font-size: 16px; line-height: 1; }
+.fact-nav button:hover { border-color: var(--on-dark); }
+@keyframes fact-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fact-text { animation: none; } }
