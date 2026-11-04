@@ -25,10 +25,9 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
   if (!brand || brand.onboarding_step < 4) redirect(`/onboarding?step=${brand?.onboarding_step ?? 1}`);
   const show = (await searchParams).show;
 
-  const [{ data: recRows }, { data: lastRun }, { data: req }] = await Promise.all([
+  const [{ data: recRows }, { data: lastRun }] = await Promise.all([
     supabase.from("recommendations").select("id, title, body, impact, ease, priority, status, category, evidence, asset_refs, created_at").eq("brand_id", brand.id).neq("status", "superseded").order("priority", { ascending: false }).order("created_at", { ascending: false }),
     supabase.from("v_visibility_daily").select("run_date").eq("brand_id", brand.id).order("run_date", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("managed_aeo_requests").select("status, created_at").eq("brand_id", brand.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
   const recs = (recRows ?? []) as Rec[];
   const assetIds = recs.flatMap((r) => r.asset_refs ?? []);
@@ -47,9 +46,8 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
         <p className="eyebrow" style={{ color: "var(--on-dark)", opacity: 0.75 }}>Managed AEO</p>
         <h2>Rather have us do all of this?</h2>
         <p style={{ opacity: 0.9 }}>Our team writes the pages, fixes the schema, gets you onto the sites AI cites, and shows you the movement every month — the same playbook we run on our own site.</p>
-        <div className="row" style={{ gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-          <Link className="btn" href="/dashboard/managed" style={{ background: "var(--cream)", color: "var(--ink)" }}>{req?.status === "new" ? "Request sent — see details" : "Start managed AEO"}</Link>
-          <span className="small" style={{ opacity: 0.8 }}>₹9,999/month + GST, plus your TrueVisible plan</span>
+        <div className="row">
+          <a className="btn" href="/dashboard/managed/go" target="_blank" rel="noopener" style={{ background: "var(--cream)", color: "var(--ink)" }}>Start managed AEO</a>
         </div>
       </section>
 
@@ -139,7 +137,7 @@ function RecCard({ r, asset, first, compact }: { r: Rec; asset?: Asset; first?: 
       )}
       <div className="row rec-actions" style={{ gap: 16, flexWrap: "wrap", alignItems: "center" }}>
         {r.status === "open" && <StatusButton id={r.id} status="diy" label="Do it myself" strong />}
-        {r.status === "open" && <Link className="btn btn-secondary btn-s" href={`/dashboard/managed?from=${r.id}`}>Have us do it</Link>}
+        {r.status === "open" && <a className="btn btn-secondary btn-s" href={`/dashboard/managed/go?from=${r.id}`} target="_blank" rel="noopener">Have us do it</a>}
         {(r.status === "open" || r.status === "diy") && <StatusButton id={r.id} status="done" label="Mark done" />}
         {r.status === "open" && <StatusButton id={r.id} status="dismissed" label="Not relevant" />}
         {r.status !== "open" && <StatusButton id={r.id} status="open" label="Move back to to-do" />}
