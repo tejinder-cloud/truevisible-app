@@ -141,7 +141,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         )}
         {hasRuns && (
           <p className="small muted">
-            Latest completed run: <strong>{fmtDay(day!)}</strong> · {enginesOnDay.join(", ")} · {latest.length} answers covering {answeredOnDay} of your {promptTotal} questions.
+            Latest completed run: <strong>{fmtDay(day!)}</strong> · {enginesOnDay.join(", ")} · {latest.length} answers covering {answeredOnDay} of your {promptTotal} questions.{" "}
             {answeredOnDay < promptTotal && !auditActive && ` The other ${promptTotal - answeredOnDay} are asked in the next daily run (6:00 AM).`}
             Answers come from each engine&apos;s API with web search on — close to, not identical with, what a person sees in the app.
           </p>
