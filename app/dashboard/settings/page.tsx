@@ -4,6 +4,8 @@ import { getWorkspace, promptLimit, trialDaysLeft } from "@/lib/workspace";
 import { DashboardShell } from "@/components/DashboardShell";
 import { SubmitButton } from "@/components/SubmitButton";
 import { saveEmailPrefs } from "./actions";
+import { Ga4Card } from "@/components/Ga4Card";
+import { ga4Configured } from "@/lib/ga4";
 
 export const metadata = { title: "Settings" };
 const LANG: Record<string, string> = { en: "English", hi: "Hindi", hinglish: "Hinglish" };
@@ -18,14 +20,16 @@ function Soon() {
   return <span className="muted">Not connected yet · coming soon</span>;
 }
 
-export default async function SettingsTab() {
+export default async function SettingsTab({ searchParams }: { searchParams: Promise<{ ga4?: string }> }) {
   const { supabase, user, brand, subscription } = await getWorkspace();
   if (!brand || brand.onboarding_step < 4) redirect(`/onboarding?step=${brand?.onboarding_step ?? 1}`);
-  const [{ data: competitors }, { count: prompts }, { data: market }, { data: me }] = await Promise.all([
+  const { ga4: flash } = await searchParams;
+  const [{ data: competitors }, { count: prompts }, { data: market }, { data: me }, { data: ga4 }] = await Promise.all([
     supabase.from("competitors").select("name, domain").eq("brand_id", brand.id).eq("status", "active").order("name"),
     supabase.from("prompts").select("id", { count: "exact", head: true }).eq("brand_id", brand.id).eq("status", "active"),
     supabase.from("products_icps").select("product, icp, location").eq("brand_id", brand.id).order("created_at").limit(1).maybeSingle(),
     supabase.from("tenant_members").select("email_daily, email_weekly").eq("user_id", user.id).eq("tenant_id", brand.tenant_id).maybeSingle(),
+    supabase.from("integrations").select("status, config").eq("brand_id", brand.id).eq("provider", "ga4").maybeSingle(),
   ]);
   const days = trialDaysLeft(subscription);
 
@@ -68,10 +72,10 @@ export default async function SettingsTab() {
             <Row label="Billing"><span className="muted">Online payment · coming soon</span></Row>
           </dl>
         </section>
-        <section className="card stack-s">
+        <section className="card stack-s" id="integrations">
           <h3>Integrations</h3>
           <dl className="settings">
-            <Row label="Google Analytics 4"><Soon /></Row>
+            <Row label="Google Analytics 4"><Ga4Card ga4={ga4 as any} configured={ga4Configured()} flash={flash} /></Row>
             <Row label="WordPress"><Soon /></Row>
             <Row label="Google Business Profile"><Soon /></Row>
           </dl>
