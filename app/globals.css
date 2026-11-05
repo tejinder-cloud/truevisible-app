@@ -245,3 +245,9 @@ dl.settings { margin: 4px 0 0; display: grid; gap: 12px; }
 pre.code { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.5; background: var(--cream); border: 1px solid var(--hairline); border-radius: 10px; padding: 12px 14px; max-height: 360px; overflow: auto; }
 .rec-actions form { display: inline; }
 .steps { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+
+/* Day 23: reports */
+.report-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.report-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; text-decoration: none; color: var(--text); padding: 16px 20px; }
+.report-row:hover { border-color: var(--text-2); }
+.report-title { font-weight: 600; font-size: 17px; }

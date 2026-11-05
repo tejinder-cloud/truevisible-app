@@ -8,7 +8,7 @@ const TABS: { label: string; href: string | null }[] = [
   { label: "Citations", href: "/dashboard/citations" },
   { label: "Recommendations", href: "/dashboard/recommendations" },
   { label: "Impact", href: null },
-  { label: "Reports", href: null },
+  { label: "Reports", href: "/dashboard/reports" },
   { label: "Settings", href: "/dashboard/settings" },
 ];
 

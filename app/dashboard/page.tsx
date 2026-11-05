@@ -32,7 +32,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     supabase.from("brand_variants").select("name").eq("brand_id", brand.id),
     supabase.from("v_visibility_daily").select("run_date, engine, answers, mentioned").eq("brand_id", brand.id).gte("run_date", since),
     supabase.from("recommendations").select("id", { count: "exact", head: true }).eq("brand_id", brand.id).eq("status", "open"),
-    supabase.from("reports").select("kind, created_at, url").eq("brand_id", brand.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("reports").select("id, kind, period_end, summary, created_at").eq("brand_id", brand.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
   const activeIds = (prompts.data ?? []).map((p) => p.id as string);
   const promptTotal = activeIds.length;
@@ -217,7 +217,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           <div className="card stack-xs"><p className="eyebrow">Sentiment</p><p className="stat" style={{ fontSize: 36 }}><Blank /></p><p className="small muted">How AI describes you · measuring starts soon</p></div>
           <div className="card stack-xs"><p className="eyebrow">What AI gets wrong</p><p className="stat" style={{ fontSize: 36 }}><Blank /></p><p className="small muted">Wrong claims about you · checking starts soon</p></div>
           <div className="card stack-xs"><p className="eyebrow">Recommendations</p><p className="stat" style={{ fontSize: 36 }}>{openRecs.count ? openRecs.count : <Blank />}</p><p className="small muted">{openRecs.count ? <Link href="/dashboard/recommendations">To do · see them</Link> : hasRuns && brand.setup_status === "verified" ? "Being written — usually within 30 minutes" : hasRuns ? "After our team checks your setup" : "Appear after your first audit"}</p></div>
-          <div className="card stack-xs"><p className="eyebrow">Latest report</p>{lastReport.data ? <p className="small">{lastReport.data.kind} · {new Date(lastReport.data.created_at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })}</p> : <p className="stat" style={{ fontSize: 36 }}><Blank /></p>}<p className="small muted">Reports arrive by email and appear here.</p></div>
+          <div className="card stack-xs"><p className="eyebrow">Latest report</p>{lastReport.data ? <p className="small"><Link href={`/dashboard/reports/${lastReport.data.id}`}>{lastReport.data.kind === "weekly" ? "Weekly trend" : "Daily digest"} · {new Date(lastReport.data.period_end + "T00:00:00Z").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" })}</Link></p> : <p className="stat" style={{ fontSize: 36 }}><Blank /></p>}<p className="small muted">{lastReport.data?.summary ?? "Your first digest arrives the morning after your setup is checked."}</p></div>
         </section>
 
         <p className="small muted">Tracking {promptTotal} questions · {competitorNames.length} competitors · {brand.languages.map((l) => ({ en: "English", hi: "Hindi", hinglish: "Hinglish" } as Record<string, string>)[l] ?? l).join(", ")} · <Link href="/onboarding?step=1">Edit setup</Link></p>

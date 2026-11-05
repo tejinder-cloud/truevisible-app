@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getWorkspace, promptLimit, trialDaysLeft } from "@/lib/workspace";
 import { DashboardShell } from "@/components/DashboardShell";
+import { SubmitButton } from "@/components/SubmitButton";
+import { saveEmailPrefs } from "./actions";
 
 export const metadata = { title: "Settings" };
 const LANG: Record<string, string> = { en: "English", hi: "Hindi", hinglish: "Hinglish" };
@@ -19,10 +21,11 @@ function Soon() {
 export default async function SettingsTab() {
   const { supabase, user, brand, subscription } = await getWorkspace();
   if (!brand || brand.onboarding_step < 4) redirect(`/onboarding?step=${brand?.onboarding_step ?? 1}`);
-  const [{ data: competitors }, { count: prompts }, { data: market }] = await Promise.all([
+  const [{ data: competitors }, { count: prompts }, { data: market }, { data: me }] = await Promise.all([
     supabase.from("competitors").select("name, domain").eq("brand_id", brand.id).eq("status", "active").order("name"),
     supabase.from("prompts").select("id", { count: "exact", head: true }).eq("brand_id", brand.id).eq("status", "active"),
     supabase.from("products_icps").select("product, icp, location").eq("brand_id", brand.id).order("created_at").limit(1).maybeSingle(),
+    supabase.from("tenant_members").select("email_daily, email_weekly").eq("user_id", user.id).eq("tenant_id", brand.tenant_id).maybeSingle(),
   ]);
   const days = trialDaysLeft(subscription);
 
@@ -72,6 +75,21 @@ export default async function SettingsTab() {
             <Row label="WordPress"><Soon /></Row>
             <Row label="Google Business Profile"><Soon /></Row>
           </dl>
+        </section>
+        <section className="card stack-s" id="email">
+          <h3>Email reports</h3>
+          <form action={saveEmailPrefs} className="stack-s">
+            <label className="row" style={{ gap: 10, alignItems: "flex-start" }}>
+              <input type="checkbox" name="daily" defaultChecked={me?.email_daily ?? true} style={{ width: 20, height: 20, marginTop: 2 }} />
+              <span><strong>Daily digest</strong><br /><span className="small muted">Around 8 AM, only on days something changed</span></span>
+            </label>
+            <label className="row" style={{ gap: 10, alignItems: "flex-start" }}>
+              <input type="checkbox" name="weekly" defaultChecked={me?.email_weekly ?? true} style={{ width: 20, height: 20, marginTop: 2 }} />
+              <span><strong>Weekly trend</strong><br /><span className="small muted">Monday morning, the week before</span></span>
+            </label>
+            <div><SubmitButton pending="Saving…" variant="secondary">Save</SubmitButton></div>
+          </form>
+          <p className="small muted">Every report stays in the <a href="/dashboard/reports">Reports</a> tab either way.</p>
         </section>
         <section className="card stack-s">
           <h3>Team &amp; alerts</h3>
