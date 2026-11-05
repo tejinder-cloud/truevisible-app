@@ -20,7 +20,7 @@ export default async function Report({ params }: { params: Promise<{ id: string 
   const { supabase, user, brand, subscription } = await getWorkspace();
   if (!brand || brand.onboarding_step < 4) redirect(`/onboarding?step=${brand?.onboarding_step ?? 1}`);
   const { id } = await params;
-  const { data: rep } = await supabase.from("reports").select("id, kind, period_start, period_end, content, emailed_at, email_recipients").eq("id", id).eq("brand_id", brand.id).maybeSingle();
+  const { data: rep } = await supabase.from("reports").select("id, kind, period_start, period_end, content, emailed_at, email_recipients, url").eq("id", id).eq("brand_id", brand.id).maybeSingle();
   if (!rep) notFound();
   const c = rep.content as any;
 
@@ -28,8 +28,9 @@ export default async function Report({ params }: { params: Promise<{ id: string 
     <DashboardShell active="Reports" email={user.email} trialDays={trialDaysLeft(subscription)} brandName={brand.name} domain={brand.primary_domain}>
       <p className="small"><Link href="/dashboard/reports">← All reports</Link></p>
       <section className="stack-xs">
-        <p className="eyebrow">{rep.kind === "weekly" ? "Weekly trend" : "Daily digest"}</p>
-        <h2>{rep.kind === "weekly" ? `${day(rep.period_start!)} – ${day(rep.period_end!)}` : day(rep.period_end!)}</h2>
+        <p className="eyebrow">{rep.kind === "monthly" ? "Monthly review" : rep.kind === "weekly" ? "Weekly trend" : "Daily digest"}</p>
+        <h2>{rep.kind === "monthly" ? new Date(rep.period_start + "T00:00:00Z").toLocaleDateString("en-IN", { month: "long", year: "numeric", timeZone: "UTC" }) : rep.kind === "weekly" ? `${day(rep.period_start!)} – ${day(rep.period_end!)}` : day(rep.period_end!)}</h2>
+        {rep.url && <p><a className="btn btn-secondary btn-s" href={`/dashboard/reports/${rep.id}/pdf`}>Download PDF</a></p>}
         <p className="small muted">{rep.emailed_at ? `Emailed to ${rep.email_recipients} ${rep.email_recipients === 1 ? "person" : "people"}` : "Not emailed (nothing changed, or email is off)"}</p>
       </section>
 
@@ -83,7 +84,23 @@ export default async function Report({ params }: { params: Promise<{ id: string 
         </div>
       )}
 
-      {c.topRec && (
+      {rep.kind === "monthly" && (
+        <div className="grid-2">
+          <section className="card stack-s">
+            <h3>Won and lost this month</h3>
+            <p className="small muted">Questions without your name, compared with last month</p>
+            {c.won?.length ? <ul className="evidence">{c.won.map((q: string) => <li key={q}>Won: “{q}”</li>)}</ul> : <p className="muted">No question newly won.</p>}
+            {c.lost?.length ? <ul className="evidence">{c.lost.map((q: string) => <li key={q}>Lost: “{q}”</li>)}</ul> : <p className="muted">None lost.</p>}
+          </section>
+          <section className="card stack-s">
+            <h3>Next month</h3>
+            {c.plan?.length ? <ol className="evidence">{c.plan.map((t: string) => <li key={t}>{t}</li>)}</ol> : <p className="muted">—</p>}
+            <p className="small muted">{c.recsDone ? `${c.recsDone} recommendation${c.recsDone === 1 ? "" : "s"} marked done this month.` : "No recommendation marked done this month."}</p>
+          </section>
+        </div>
+      )}
+
+      {c.topRec && rep.kind !== "monthly" && (
         <section className="card stack-xs">
           <p className="eyebrow">One thing to do</p>
           <h3>{c.topRec}</h3>
