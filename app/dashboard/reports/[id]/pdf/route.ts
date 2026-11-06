@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { siteUrl } from "@/lib/site";
 import { createClient } from "@/lib/supabase/server";
 
 // Download a report's PDF: the report row and the file are both read with the user's own rights (RLS + storage
@@ -7,8 +8,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const supabase = await createClient();
   const { data: rep } = await supabase.from("reports").select("url").eq("id", id).maybeSingle();
-  if (!rep?.url) return NextResponse.redirect(new URL(`/dashboard/reports/${id}`, req.url));
+  if (!rep?.url) return NextResponse.redirect(new URL(`/dashboard/reports/${id}`, siteUrl(req.nextUrl.origin)));
   const { data, error } = await supabase.storage.from("reports").createSignedUrl(rep.url, 60, { download: true });
-  if (error || !data?.signedUrl) return NextResponse.redirect(new URL(`/dashboard/reports/${id}?pdf=missing`, req.url));
+  if (error || !data?.signedUrl) return NextResponse.redirect(new URL(`/dashboard/reports/${id}?pdf=missing`, siteUrl(req.nextUrl.origin)));
   return NextResponse.redirect(data.signedUrl);
 }

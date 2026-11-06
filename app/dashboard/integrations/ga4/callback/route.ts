@@ -6,7 +6,7 @@ import { emailFromIdToken, parseAccountSummaries } from "@/lib/ga4";
 // Google → here with ?code. Exchange it, list the account's GA4 properties, and hand the refresh token to the
 // database (Vault) through tv_ga4_save_token. The customer then picks the property in Settings.
 export async function GET(req: NextRequest) {
-  const back = (q: string) => NextResponse.redirect(new URL(`/dashboard/settings?ga4=${q}#integrations`, req.url));
+  const back = (q: string) => NextResponse.redirect(new URL(`/dashboard/settings?ga4=${q}#integrations`, siteUrl(req.nextUrl.origin)));
   const p = req.nextUrl.searchParams;
   const state = req.cookies.get("tv_ga4_state")?.value;
   if (p.get("error")) return back("cancelled");
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.redirect(new URL("/login", req.url));
+  if (!user) return NextResponse.redirect(new URL("/login", siteUrl(req.nextUrl.origin)));
   const { data: member } = await supabase.from("tenant_members").select("tenant_id").eq("user_id", user.id).order("created_at").limit(1).maybeSingle();
   const { data: brand } = member ? await supabase.from("brands").select("id").eq("tenant_id", member.tenant_id).order("created_at").limit(1).maybeSingle() : { data: null };
   if (!brand) return back("failed");

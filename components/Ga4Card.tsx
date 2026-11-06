@@ -8,8 +8,12 @@ const NOTE: Record<string, string> = {
 };
 
 /** Settings → Google Analytics 4: connect, pick the property, or disconnect. */
-export function Ga4Card({ ga4, configured, flash }: { ga4: Ga4; configured: boolean; flash?: string }) {
-  const props = ga4?.config?.properties ?? [];
+export function Ga4Card({ ga4, configured, flash, brandName, domain }: { ga4: Ga4; configured: boolean; flash?: string; brandName: string; domain: string | null }) {
+  // Best guess first: a property named like the brand or its domain (an agency login can see dozens).
+  const norm = (x: string) => x.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/[^a-z0-9]+/g, " ").trim();
+  const keys = [norm(brandName), ...(domain ? [norm(domain), norm(domain.split(".")[0])] : [])].filter((k) => k.length >= 3);
+  const score = (p: { name: string }) => (keys.some((k) => norm(p.name) === k) ? 2 : keys.some((k) => norm(p.name).includes(k)) ? 1 : 0);
+  const props = [...(ga4?.config?.properties ?? [])].sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name));
   return (
     <div className="stack-s">
       <p className="small muted">Shows visits that came from ChatGPT, Gemini, Perplexity and Copilot — and what they did — on the Impact tab. Read-only access.</p>
@@ -21,7 +25,7 @@ export function Ga4Card({ ga4, configured, flash }: { ga4: Ga4; configured: bool
         </>
       ) : ga4?.status === "pending" && props.length ? (
         <form action={selectGa4Property} className="stack-s">
-          <label className="stack-xs"><span className="small">Which property is your website?</span>
+          <label className="stack-xs"><span className="small">Which property is your website?{props.length > 1 ? ` (${props.length} found — best match first)` : ""}</span>
             <select name="property" defaultValue={props[0].id}>{props.map((p) => <option key={p.id} value={p.id}>{p.name}{p.account ? ` — ${p.account}` : ""}</option>)}</select>
           </label>
           <div className="row" style={{ gap: 12 }}><SubmitButton pending="Saving…">Use this property</SubmitButton></div>

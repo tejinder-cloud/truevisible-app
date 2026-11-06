@@ -75,7 +75,7 @@ export default async function SettingsTab({ searchParams }: { searchParams: Prom
         <section className="card stack-s" id="integrations">
           <h3>Integrations</h3>
           <dl className="settings">
-            <Row label="Google Analytics 4"><Ga4Card ga4={ga4 as any} configured={ga4Configured()} flash={flash} /></Row>
+            <Row label="Google Analytics 4"><Ga4Card ga4={ga4 as any} configured={ga4Configured()} flash={flash} brandName={brand.name} domain={brand.primary_domain} /></Row>
             <Row label="WordPress"><Soon /></Row>
             <Row label="Google Business Profile"><Soon /></Row>
           </dl>
