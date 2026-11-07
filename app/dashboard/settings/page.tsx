@@ -8,6 +8,8 @@ import { cancelTrack } from "../upgrade/actions";
 import { formatMoney } from "@/lib/billing";
 import { Ga4Card } from "@/components/Ga4Card";
 import { ga4Configured } from "@/lib/ga4";
+import { WordPressCard } from "@/components/WordPressCard";
+import { pathFor } from "@/lib/execution";
 
 export const metadata = { title: "Settings" };
 const LANG: Record<string, string> = { en: "English", hi: "Hindi", hinglish: "Hinglish" };
@@ -23,21 +25,23 @@ function Soon() {
   return <span className="muted">Not connected yet · coming soon</span>;
 }
 
-export default async function SettingsTab({ searchParams }: { searchParams: Promise<{ ga4?: string; upgraded?: string }> }) {
+export default async function SettingsTab({ searchParams }: { searchParams: Promise<{ ga4?: string; upgraded?: string; wp?: string }> }) {
   const { supabase, user, brand, subscription } = await getWorkspace();
   if (!brand || brand.onboarding_step < 4) redirect(`/onboarding?step=${brand?.onboarding_step ?? 1}`);
-  const { ga4: flash, upgraded } = await searchParams;
+  const { ga4: flash, upgraded, wp: wpFlash } = await searchParams;
   const [{ data: bill }, { data: invoices }] = await Promise.all([
     supabase.from("subscriptions").select("status, price_minor, currency, billing_interval, current_period_end, razorpay_subscription_id").eq("tenant_id", brand.tenant_id).eq("product", "truevisible").is("brand_id", null).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("invoices").select("id, amount_minor, gst_minor, currency, paid_at, created_at").eq("tenant_id", brand.tenant_id).order("created_at", { ascending: false }).limit(12),
   ]);
-  const [{ data: competitors }, { count: prompts }, { data: market }, { data: me }, { data: ga4 }] = await Promise.all([
+  const [{ data: competitors }, { count: prompts }, { data: market }, { data: me }, { data: ga4 }, { data: wp }] = await Promise.all([
     supabase.from("competitors").select("name, domain").eq("brand_id", brand.id).eq("status", "active").order("name"),
     supabase.from("prompts").select("id", { count: "exact", head: true }).eq("brand_id", brand.id).eq("status", "active"),
     supabase.from("products_icps").select("product, icp, location").eq("brand_id", brand.id).order("created_at").limit(1).maybeSingle(),
     supabase.from("tenant_members").select("email_daily, email_weekly").eq("user_id", user.id).eq("tenant_id", brand.tenant_id).maybeSingle(),
     supabase.from("integrations").select("status, config").eq("brand_id", brand.id).eq("provider", "ga4").maybeSingle(),
+    supabase.from("integrations").select("status, config").eq("brand_id", brand.id).eq("provider", "wordpress").neq("status", "revoked").maybeSingle(),
   ]);
+  const path = pathFor(brand.site_platform);
   const days = trialDaysLeft(subscription);
 
   return (
@@ -98,9 +102,13 @@ export default async function SettingsTab({ searchParams }: { searchParams: Prom
         </section>
         <section className="card stack-s" id="integrations">
           <h3>Integrations</h3>
+          <div className="stack-xs">
+            <p className="small"><strong>How changes reach your site</strong> · {path.label}</p>
+            <p className="small muted">{path.how}</p>
+          </div>
           <dl className="settings">
             <Row label="Google Analytics 4"><Ga4Card ga4={ga4 as any} configured={ga4Configured()} flash={flash} brandName={brand.name} domain={brand.primary_domain} /></Row>
-            <Row label="WordPress"><Soon /></Row>
+            {path.connect === "wordpress" || wp ? <Row label="WordPress"><WordPressCard wp={wp as any} flash={wpFlash} /></Row> : null}
             <Row label="Google Business Profile"><Soon /></Row>
           </dl>
         </section>
