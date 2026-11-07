@@ -13,3 +13,19 @@ export async function setRecommendationStatus(fd: FormData) {
   revalidatePath("/dashboard/recommendations");
   revalidatePath("/dashboard");
 }
+
+export async function requestWpDraft(fd: FormData) {
+  const { supabase } = await getWorkspace();
+  const id = String(fd.get("id") ?? "");
+  if (!id) return;
+  await supabase.rpc("tv_wp_request_draft", { p_rec: id });
+  revalidatePath("/dashboard/recommendations");
+}
+
+export async function requestWpPublish(fd: FormData) {
+  const { supabase } = await getWorkspace();
+  const id = String(fd.get("action") ?? "");
+  if (!id) return;
+  await supabase.rpc("tv_wp_request_publish", { p_action: id });
+  revalidatePath("/dashboard/recommendations");
+}

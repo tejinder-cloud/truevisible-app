@@ -253,3 +253,4 @@ pre.code { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size:
 .report-title { font-weight: 600; font-size: 17px; }
 .integrations { align-items: start; }
 .integrations h4 { font-size: 16px; font-weight: 600; margin: 0; }
+.wp-status { border-left: 3px solid var(--coral); padding: 8px 12px; background: var(--surface-2, rgba(0,0,0,0.03)); border-radius: 6px; }
