@@ -5,8 +5,8 @@ import { DashboardShell } from "@/components/DashboardShell";
 import { AnswerText } from "@/components/AnswerText";
 import { AssetActions } from "@/components/AssetActions";
 import { ENGINE_LABEL } from "@/lib/overview";
-import { setRecommendationStatus } from "./actions";
-import { inChangePack, pathFor } from "@/lib/execution";
+import { requestWpDraft, requestWpPublish, setRecommendationStatus } from "./actions";
+import { canPublish, DRAFTABLE, inChangePack, pathFor, wpState, type WpAction } from "@/lib/execution";
 
 export const metadata = { title: "Recommendations" };
 const KIND: Record<string, string> = {
@@ -27,11 +27,16 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
   if (!brand || brand.onboarding_step < 4) redirect(`/onboarding?step=${brand?.onboarding_step ?? 1}`);
   const show = (await searchParams).show;
 
-  const [{ data: recRows }, { data: lastRun }, { data: actionRows }] = await Promise.all([
+  const [{ data: recRows }, { data: lastRun }, { data: actionRows }, { data: wpRows }, { data: wpInt }] = await Promise.all([
     supabase.from("recommendations").select("id, title, body, impact, ease, priority, status, category, evidence, asset_refs, created_at").eq("brand_id", brand.id).neq("status", "superseded").order("priority", { ascending: false }).order("created_at", { ascending: false }),
     supabase.from("v_visibility_daily").select("run_date").eq("brand_id", brand.id).order("run_date", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("actions").select("id, path, description, status, performed_by, performed_at, created_at, url").eq("brand_id", brand.id).order("created_at", { ascending: false }).limit(20),
+    supabase.from("actions").select("id, recommendation_id, status, url, detail").eq("brand_id", brand.id).eq("path", "wordpress").order("created_at", { ascending: false }),
+    supabase.from("integrations").select("status").eq("brand_id", brand.id).eq("provider", "wordpress").maybeSingle(),
   ]);
+  const wpByRec = new Map<string, WpAction>();
+  for (const w of (wpRows ?? []) as (WpAction & { recommendation_id: string | null })[]) if (w.recommendation_id && !wpByRec.has(w.recommendation_id)) wpByRec.set(w.recommendation_id, w);
+  const wpReady = wpInt?.status === "connected" && canPublish(subscription?.plan);
   const log = (actionRows ?? []) as Act[];
   const recs = (recRows ?? []) as Rec[];
   const assetIds = recs.flatMap((r) => r.asset_refs ?? []);
@@ -86,9 +91,9 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
               {path.connect === "wordpress" && <p className="small muted">On WordPress? <Link href="/dashboard/settings#wordpress">Connect your site</Link> and we can publish these for you.</p>}
             </section>
           )}
-          {open.length > 0 && <ul className="rec-list">{open.map((r, i) => <RecCard key={r.id} r={r} asset={assets.get(r.asset_refs?.[0])} first={i === 0} />)}</ul>}
-          {diy.length > 0 && <><h3>You&apos;re doing these</h3><ul className="rec-list">{diy.map((r) => <RecCard key={r.id} r={r} asset={assets.get(r.asset_refs?.[0])} />)}</ul></>}
-          {done.length > 0 && <><h3>Done</h3><ul className="rec-list">{done.map((r) => <RecCard key={r.id} r={r} asset={assets.get(r.asset_refs?.[0])} compact />)}</ul></>}
+          {open.length > 0 && <ul className="rec-list">{open.map((r, i) => <RecCard key={r.id} r={r} asset={assets.get(r.asset_refs?.[0])} first={i === 0} wp={wpByRec.get(r.id)} wpReady={wpReady} />)}</ul>}
+          {diy.length > 0 && <><h3>You&apos;re doing these</h3><ul className="rec-list">{diy.map((r) => <RecCard key={r.id} r={r} asset={assets.get(r.asset_refs?.[0])} wp={wpByRec.get(r.id)} wpReady={wpReady} />)}</ul></>}
+          {done.length > 0 && <><h3>Done</h3><ul className="rec-list">{done.map((r) => <RecCard key={r.id} r={r} asset={assets.get(r.asset_refs?.[0])} compact wp={wpByRec.get(r.id)} />)}</ul></>}
           {dismissed.length > 0 && (show === "dismissed"
             ? <><h3>Dismissed</h3><ul className="rec-list">{dismissed.map((r) => <RecCard key={r.id} r={r} asset={assets.get(r.asset_refs?.[0])} compact />)}</ul></>
             : <p className="small muted"><Link href="/dashboard/recommendations?show=dismissed">Show {dismissed.length} dismissed</Link></p>)}
@@ -131,9 +136,27 @@ function StatusButton({ id, status, label, strong }: { id: string; status: strin
   );
 }
 
-function RecCard({ r, asset, first, compact }: { r: Rec; asset?: Asset; first?: boolean; compact?: boolean }) {
+function WpStatus({ wp }: { wp: WpAction }) {
+  const s = wpState(wp);
+  return (
+    <div className="wp-status stack-xs" role="status">
+      <p className="small"><strong>WordPress:</strong> {s.text}</p>
+      <div className="row" style={{ gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+        {(s.key === "review" || s.key === "blocked") && wp.url && <a className="btn btn-secondary btn-s" href={wp.url} target="_blank" rel="noopener">{s.key === "blocked" ? "Fill in on WordPress" : "Check the draft"}</a>}
+        {(s.key === "review" || s.key === "blocked") && (
+          <form action={requestWpPublish}><input type="hidden" name="action" value={wp.id} /><button type="submit" className="btn btn-s">{s.key === "blocked" ? "I've filled them in — publish" : "Publish"}</button></form>
+        )}
+        {s.key === "live" && wp.url && <a className="small" href={wp.url} target="_blank" rel="noopener">View the page →</a>}
+      </div>
+    </div>
+  );
+}
+
+function RecCard({ r, asset, first, compact, wp, wpReady }: { r: Rec; asset?: Asset; first?: boolean; compact?: boolean; wp?: WpAction; wpReady?: boolean }) {
   const body = asset?.content?.body ?? "";
   const format = asset?.content?.format ?? "markdown";
+  const st = wpState(wp);
+  const canDraft = wpReady && asset && DRAFTABLE.has(asset.kind) && (r.status === "open" || r.status === "diy") && (st.key === "none" || st.key === "failed");
   return (
     <li className="card rec stack-s">
       <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
@@ -154,9 +177,13 @@ function RecCard({ r, asset, first, compact }: { r: Rec; asset?: Asset; first?: 
           </div>
         </details>
       )}
+      {wp && st.key !== "none" && <WpStatus wp={wp} />}
       <div className="row rec-actions" style={{ gap: 16, flexWrap: "wrap", alignItems: "center" }}>
-        {r.status === "open" && <StatusButton id={r.id} status="diy" label="Do it myself" strong />}
-        {r.status === "open" && <a className="btn btn-secondary btn-s" href={`/dashboard/managed/go?from=${r.id}`} target="_blank" rel="noopener">Have us do it</a>}
+        {canDraft && (
+          <form action={requestWpDraft}><input type="hidden" name="id" value={r.id} /><button type="submit" className="btn btn-s">{st.key === "failed" ? "Try the draft again" : "Draft it on WordPress"}</button></form>
+        )}
+        {r.status === "open" && !wp && <StatusButton id={r.id} status="diy" label="Do it myself" strong />}
+        {r.status === "open" && !wpReady && <a className="btn btn-secondary btn-s" href={`/dashboard/managed/go?from=${r.id}`} target="_blank" rel="noopener">Have us do it</a>}
         {(r.status === "open" || r.status === "diy") && <StatusButton id={r.id} status="done" label="Mark done" />}
         {r.status === "open" && <StatusButton id={r.id} status="dismissed" label="Not relevant" />}
         {r.status !== "open" && <StatusButton id={r.id} status="open" label="Move back to to-do" />}

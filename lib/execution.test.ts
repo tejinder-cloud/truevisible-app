@@ -28,3 +28,19 @@ test("change pack markdown: numbered, code fenced, platform hint, empty state", 
   assert.match(changePackMarkdown({ brand: "X", domain: null, platform: null, date: "d", items: [] }), /No on-site changes/);
   assert.equal(changePackFilename("The Growth Lab", "2026-11-07"), "the-growth-lab-change-pack-2026-11-07.md");
 });
+
+import { canPublish, wpState } from "./execution";
+test("publishing is for TGL and managed plans; WordPress states read plainly", () => {
+  assert.equal(canPublish("internal"), true);
+  assert.equal(canPublish("managed_plus"), true);
+  assert.equal(canPublish("track"), false);
+  assert.equal(canPublish("trial"), false);
+  assert.equal(wpState(undefined).key, "none");
+  assert.equal(wpState({ id: "a", status: "planned", url: null, detail: { step: "draft" } }).key, "drafting");
+  assert.equal(wpState({ id: "a", status: "in_progress", url: "u", detail: { step: "awaiting_approval", placeholders: [] } }).key, "review");
+  const b = wpState({ id: "a", status: "in_progress", url: "u", detail: { step: "awaiting_approval", placeholders: ["[add x]", "[confirm y]"] } });
+  assert.equal(b.key, "blocked"); assert.match(b.text, /2 things to fill in.*\[add x\], \[confirm y\]/);
+  assert.equal(wpState({ id: "a", status: "planned", url: "u", detail: { step: "publish" } }).key, "publishing");
+  assert.equal(wpState({ id: "a", status: "done", url: "u", detail: {} }).key, "live");
+  assert.match(wpState({ id: "a", status: "failed", url: null, detail: { error: "tool needs content" } }).text, /tool needs content/);
+});
