@@ -64,9 +64,9 @@ export function TrackCheckout() {
       {currency === "INR" && (
         <div className="grid-2" style={{ gap: 12 }}>
           <label className="stack-xs"><span className="small">GSTIN <span className="muted">(optional, for a GST invoice)</span></span>
-            <input value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} maxLength={15} placeholder="03ABCDE1234F1Z5" autoComplete="off" /></label>
+            <input type="text" value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} maxLength={15} placeholder="03ABCDE1234F1Z5" autoComplete="off" /></label>
           <label className="stack-xs"><span className="small">Business name on invoice <span className="muted">(optional)</span></span>
-            <input value={legal} onChange={(e) => setLegal(e.target.value)} maxLength={200} /></label>
+            <input type="text" value={legal} onChange={(e) => setLegal(e.target.value)} maxLength={200} /></label>
         </div>
       )}
       <div className="card" style={{ padding: 16, background: "var(--cream)" }}>
