@@ -9,7 +9,9 @@ export function TopBar({ email, trialDays }: { email?: string | null; trialDays?
         </Link>
         {email ? (
           <div className="account small">
-            {trialDays != null && <span className="chip">Trial · {trialDays} {trialDays === 1 ? "day" : "days"} left</span>}
+            {trialDays != null && (trialDays > 0
+              ? <span className="chip">Trial · {trialDays} {trialDays === 1 ? "day" : "days"} left</span>
+              : <a className="chip" href="/dashboard/upgrade">Trial ended · Upgrade</a>)}
             <span className="muted email" title={email}>{email}</span>
             <form action="/auth/signout" method="post">
               <button className="btn-link" type="submit">Sign out</button>

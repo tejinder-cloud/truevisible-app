@@ -91,6 +91,7 @@ export function PromptsStep({ ctx, limit, initialLanguages, initialPrompts }: {
               onClick={() => setRows((rs) => [...rs, withKey({ text: "", language: langs[0] ?? "en", journey_phase: "consideration" }, "user")])}>
               {full ? `Plan limit reached (${limit})` : "+ Add your own"}
             </button>
+            {full && limit >= 50 && <span className="small muted" style={{ marginLeft: 12 }}>Need more questions? <a href="/dashboard/managed/go?plan=more_questions" target="_blank" rel="noopener">Ask us</a></span>}
           </div>
           <input type="hidden" name="prompts" value={JSON.stringify(rows.map(({ text, language, journey_phase, source }) => ({ text, language, journey_phase, source })))} />
         </div>

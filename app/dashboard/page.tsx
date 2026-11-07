@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getWorkspace, trialDaysLeft } from "@/lib/workspace";
 import { DashboardShell } from "@/components/DashboardShell";
+import { trialState } from "@/lib/workspace";
 import { Meter } from "@/components/Meter";
 import { VisibilityChart } from "@/components/VisibilityChart";
 import { AuditProgress } from "@/components/AuditProgress";
@@ -88,6 +89,13 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
   return (
       <DashboardShell active="Overview" email={user.email} trialDays={days} brandName={brand.name} domain={brand.primary_domain}>
+        {trialState(subscription).kind === "ended" && (
+          <section className="card ink stack-xs">
+            <p className="eyebrow" style={{ color: "var(--on-dark)", opacity: 0.75 }}>Trial ended</p>
+            <h3>Your numbers stay here. Checks have stopped.</h3>
+            <p style={{ opacity: 0.9 }}>Keep watching every week, or have our team do the work. <a href="/dashboard/upgrade" style={{ color: "inherit" }}>See your options →</a></p>
+          </section>
+        )}
         {auditActive ? (
           <AuditProgress brandId={brand.id} submittedAt={brand.setup_submitted_at!} promptCount={toAsk || promptTotal} updating={hasRuns} />
         ) : brand.setup_status === "needs_changes" ? (

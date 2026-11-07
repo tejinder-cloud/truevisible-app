@@ -7,17 +7,19 @@ const AEO_PAGE = process.env.NEXT_PUBLIC_MANAGED_AEO_URL || "https://thegrowthla
 
 export async function GET(req: NextRequest) {
   const from = req.nextUrl.searchParams.get("from");
+  const plan = req.nextUrl.searchParams.get("plan");                 // track | managed | more_questions (default managed)
+  const NOTE: Record<string, string> = { track: "Clicked Upgrade to Track", more_questions: "Asked for more than 50 questions", managed: "Clicked Start managed AEO in the dashboard" };
   const target = new URL(AEO_PAGE);
   target.searchParams.set("utm_source", "truevisible");
   target.searchParams.set("utm_medium", "dashboard");
-  target.searchParams.set("utm_campaign", "managed_aeo");
+  target.searchParams.set("utm_campaign", plan && NOTE[plan] ? plan : "managed_aeo");
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: member } = await supabase.from("tenant_members").select("tenant_id").eq("user_id", user.id).order("created_at").limit(1).maybeSingle();
       const { data: brand } = member ? await supabase.from("brands").select("id").eq("tenant_id", member.tenant_id).order("created_at").limit(1).maybeSingle() : { data: null };
-      if (brand) await supabase.rpc("tv_request_managed_aeo", { p_brand: brand.id, p_recommendation: from && /^[0-9a-f-]{36}$/i.test(from) ? from : null, p_note: "Clicked Start managed AEO in the dashboard" });
+      if (brand) await supabase.rpc("tv_request_managed_aeo", { p_brand: brand.id, p_recommendation: from && /^[0-9a-f-]{36}$/i.test(from) ? from : null, p_note: NOTE[plan ?? "managed"] ?? NOTE.managed });
     }
   } catch { /* the customer still gets to the page */ }
   return NextResponse.redirect(target, 303);

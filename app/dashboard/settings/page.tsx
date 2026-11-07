@@ -10,7 +10,8 @@ import { ga4Configured } from "@/lib/ga4";
 export const metadata = { title: "Settings" };
 const LANG: Record<string, string> = { en: "English", hi: "Hindi", hinglish: "Hinglish" };
 const PLATFORM: Record<string, string> = { wordpress: "WordPress", shopify: "Shopify", webflow: "Webflow", wix: "Wix", squarespace: "Squarespace", custom: "Custom", none: "No website" };
-const PLAN: Record<string, string> = { trial: "Free trial", truevisible: "TrueVisible", managed_aeo: "Managed AEO", internal: "Internal (The Growth Lab)", agency: "Agency" };
+const PLAN: Record<string, string> = { trial: "Free trial", track: "Track", managed: "Managed", managed_plus: "Managed Plus", truevisible: "Track", managed_aeo: "Managed", internal: "Internal (The Growth Lab)", agency: "Agency" };
+const CADENCE: Record<string, string> = { internal: "Every day at 6:00 AM IST", trial: "Every day during your 7-day trial", track: "Every Monday, plus a deeper check on the 1st", managed: "Every Monday, plus a deeper check on the 1st", managed_plus: "Every Monday, plus a deeper check on the 1st", truevisible: "Every Monday, plus a deeper check on the 1st", managed_aeo: "Every Monday, plus a deeper check on the 1st" };
 const SETUP: Record<string, string> = { pending_verification: "Being checked by our team", needs_changes: "Needs a change", verified: "Verified" };
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -58,9 +59,9 @@ export default async function SettingsTab({ searchParams }: { searchParams: Prom
         <section className="card stack-s">
           <div className="spread"><h3>Questions &amp; languages</h3><Link href="/onboarding?step=3">Edit</Link></div>
           <dl className="settings">
-            <Row label="Active questions">{prompts ?? 0} of {promptLimit(subscription)} on your plan</Row>
+            <Row label="Active questions">{prompts ?? 0} of {promptLimit(subscription)} on your plan{(prompts ?? 0) >= promptLimit(subscription) && promptLimit(subscription) >= 50 ? <> · <a href="/dashboard/managed/go?plan=more_questions" target="_blank" rel="noopener">need more? Ask us</a></> : null}</Row>
             <Row label="Languages">{brand.languages.map((l) => LANG[l] ?? l).join(", ") || "—"}</Row>
-            <Row label="Asked">Every day at 6:00 AM IST on ChatGPT, Gemini and Perplexity</Row>
+            <Row label="Asked">{CADENCE[subscription?.plan ?? ""] ?? "—"} · ChatGPT, Gemini and Perplexity</Row>
           </dl>
           <Link href="/dashboard/prompts" className="small">See every question&apos;s answers →</Link>
         </section>
@@ -68,7 +69,8 @@ export default async function SettingsTab({ searchParams }: { searchParams: Prom
           <h3>Plan</h3>
           <dl className="settings">
             <Row label="Plan">{subscription ? PLAN[subscription.plan] ?? subscription.plan : "—"}</Row>
-            {days != null && <Row label="Trial">{days} {days === 1 ? "day" : "days"} left</Row>}
+            {subscription?.plan === "trial" && <Row label="Trial">{days == null ? "7 days — starts after our team checks your setup and your first check runs" : days > 0 ? `${days} ${days === 1 ? "day" : "days"} left` : "Ended"}</Row>}
+            {subscription?.plan === "trial" && <Row label="Next"><a href="/dashboard/upgrade">Keep watching, or have it done →</a></Row>}
             <Row label="Billing"><span className="muted">Online payment · coming soon</span></Row>
           </dl>
         </section>
