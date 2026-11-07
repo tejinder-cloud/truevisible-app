@@ -4,6 +4,8 @@ import { getWorkspace, promptLimit, trialDaysLeft } from "@/lib/workspace";
 import { DashboardShell } from "@/components/DashboardShell";
 import { SubmitButton } from "@/components/SubmitButton";
 import { saveEmailPrefs } from "./actions";
+import { cancelTrack } from "../upgrade/actions";
+import { formatMoney } from "@/lib/billing";
 import { Ga4Card } from "@/components/Ga4Card";
 import { ga4Configured } from "@/lib/ga4";
 
@@ -21,10 +23,14 @@ function Soon() {
   return <span className="muted">Not connected yet · coming soon</span>;
 }
 
-export default async function SettingsTab({ searchParams }: { searchParams: Promise<{ ga4?: string }> }) {
+export default async function SettingsTab({ searchParams }: { searchParams: Promise<{ ga4?: string; upgraded?: string }> }) {
   const { supabase, user, brand, subscription } = await getWorkspace();
   if (!brand || brand.onboarding_step < 4) redirect(`/onboarding?step=${brand?.onboarding_step ?? 1}`);
-  const { ga4: flash } = await searchParams;
+  const { ga4: flash, upgraded } = await searchParams;
+  const [{ data: bill }, { data: invoices }] = await Promise.all([
+    supabase.from("subscriptions").select("status, price_minor, currency, billing_interval, current_period_end, razorpay_subscription_id").eq("tenant_id", brand.tenant_id).eq("product", "truevisible").is("brand_id", null).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("invoices").select("id, amount_minor, gst_minor, currency, paid_at, created_at").eq("tenant_id", brand.tenant_id).order("created_at", { ascending: false }).limit(12),
+  ]);
   const [{ data: competitors }, { count: prompts }, { data: market }, { data: me }, { data: ga4 }] = await Promise.all([
     supabase.from("competitors").select("name, domain").eq("brand_id", brand.id).eq("status", "active").order("name"),
     supabase.from("prompts").select("id", { count: "exact", head: true }).eq("brand_id", brand.id).eq("status", "active"),
@@ -65,14 +71,30 @@ export default async function SettingsTab({ searchParams }: { searchParams: Prom
           </dl>
           <Link href="/dashboard/prompts" className="small">See every question&apos;s answers →</Link>
         </section>
-        <section className="card stack-s">
+        <section className="card stack-s" id="plan">
           <h3>Plan</h3>
+          {upgraded && <p className="small" role="status"><strong>Payment received — you&apos;re on Track.</strong> Your questions are now checked every Monday.</p>}
           <dl className="settings">
             <Row label="Plan">{subscription ? PLAN[subscription.plan] ?? subscription.plan : "—"}</Row>
             {subscription?.plan === "trial" && <Row label="Trial">{days == null ? "7 days — starts after our team checks your setup and your first check runs" : days > 0 ? `${days} ${days === 1 ? "day" : "days"} left` : "Ended"}</Row>}
             {subscription?.plan === "trial" && <Row label="Next"><a href="/dashboard/upgrade">Keep watching, or have it done →</a></Row>}
-            <Row label="Billing"><span className="muted">Online payment · coming soon</span></Row>
+            {bill && bill.razorpay_subscription_id ? (
+              <>
+                <Row label="Billing">{formatMoney(bill.price_minor, bill.currency)} {bill.billing_interval === "year" ? "a year" : "a month"}{bill.currency === "INR" ? " + GST" : ""}</Row>
+                <Row label={bill.status === "cancelled" ? "Ends" : "Renews"}>{bill.current_period_end ? new Date(bill.current_period_end).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }) : "—"}</Row>
+                {bill.status === "past_due" && <Row label="Payment"><span style={{ color: "var(--coral-dark)" }}>Last renewal failed — Razorpay will retry; update your card from their email.</span></Row>}
+              </>
+            ) : subscription?.plan === "trial" ? <Row label="Billing"><a href="/dashboard/upgrade/track">Upgrade to Track →</a></Row> : null}
           </dl>
+          {invoices && invoices.length > 0 && (
+            <div className="stack-xs">
+              <p className="small muted">Payments</p>
+              <ul className="evidence small">{invoices.map((i) => <li key={i.id}>{new Date(i.paid_at ?? i.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" })} · {formatMoney(Number(i.amount_minor) + Number(i.gst_minor), i.currency)}{Number(i.gst_minor) ? ` (incl. GST ${formatMoney(Number(i.gst_minor), i.currency)})` : ""}</li>)}</ul>
+            </div>
+          )}
+          {bill?.razorpay_subscription_id && bill.status === "active" && (
+            <form action={cancelTrack}><SubmitButton pending="Cancelling…" variant="secondary">Cancel at end of period</SubmitButton></form>
+          )}
         </section>
         <section className="card stack-s" id="integrations">
           <h3>Integrations</h3>

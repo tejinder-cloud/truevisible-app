@@ -32,7 +32,7 @@ export default async function Upgrade() {
             <li>Recommendations ranked, with ready-made drafts — you act on them</li>
             <li>Visits from AI, from your Google Analytics</li>
           </ul>
-          <p style={{ marginTop: "auto" }}><a className="btn btn-primary" href="/dashboard/managed/go?plan=track" target="_blank" rel="noopener">Upgrade to Track</a></p>
+          <p style={{ marginTop: "auto" }}><Link className="btn btn-primary" href="/dashboard/upgrade/track">Upgrade to Track</Link></p>
         </section>
         <section className="card stack-s">
           <p className="eyebrow">Managed</p>
