@@ -6,6 +6,7 @@ import { AnswerText } from "@/components/AnswerText";
 import { AssetActions } from "@/components/AssetActions";
 import { ENGINE_LABEL } from "@/lib/overview";
 import { setRecommendationStatus } from "./actions";
+import { inChangePack, pathFor } from "@/lib/execution";
 
 export const metadata = { title: "Recommendations" };
 const KIND: Record<string, string> = {
@@ -18,6 +19,7 @@ const effort = (n: number) => (n >= 4 ? "Quick" : n >= 3 ? "Moderate" : "Bigger 
 const fmt = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
 type Rec = { id: string; title: string; body: string | null; impact: number; ease: number; priority: number; status: string; category: string | null; evidence: any; asset_refs: string[]; created_at: string };
+type Act = { id: string; path: string; description: string; status: string; performed_by: string | null; performed_at: string | null; created_at: string; url: string | null };
 type Asset = { id: string; kind: string; title: string; content: { format?: string; body?: string } | null };
 
 export default async function RecommendationsTab({ searchParams }: { searchParams: Promise<{ show?: string }> }) {
@@ -25,10 +27,12 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
   if (!brand || brand.onboarding_step < 4) redirect(`/onboarding?step=${brand?.onboarding_step ?? 1}`);
   const show = (await searchParams).show;
 
-  const [{ data: recRows }, { data: lastRun }] = await Promise.all([
+  const [{ data: recRows }, { data: lastRun }, { data: actionRows }] = await Promise.all([
     supabase.from("recommendations").select("id, title, body, impact, ease, priority, status, category, evidence, asset_refs, created_at").eq("brand_id", brand.id).neq("status", "superseded").order("priority", { ascending: false }).order("created_at", { ascending: false }),
     supabase.from("v_visibility_daily").select("run_date").eq("brand_id", brand.id).order("run_date", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("actions").select("id, path, description, status, performed_by, performed_at, created_at, url").eq("brand_id", brand.id).order("created_at", { ascending: false }).limit(20),
   ]);
+  const log = (actionRows ?? []) as Act[];
   const recs = (recRows ?? []) as Rec[];
   const assetIds = recs.flatMap((r) => r.asset_refs ?? []);
   const { data: assetRows } = assetIds.length ? await supabase.from("assets").select("id, kind, title, content").in("id", assetIds) : { data: [] };
@@ -38,6 +42,8 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
   const diy = recs.filter((r) => r.status === "diy");
   const done = recs.filter((r) => r.status === "done" || r.status === "managed");
   const dismissed = recs.filter((r) => r.status === "dismissed");
+  const packCount = recs.filter(inChangePack).length;
+  const path = pathFor(brand.site_platform);
   const latestBatch = recs.reduce<string | null>((m, r) => (!m || r.created_at > m ? r.created_at : m), null);
 
   return (
@@ -68,6 +74,18 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
             </p>
             <p className="small muted">Impact and effort are our estimate. The measured facts under each item come from your stored answers.</p>
           </section>
+          {packCount > 0 && (
+            <section className="card stack-xs">
+              <div className="spread" style={{ gap: 12, flexWrap: "wrap" }}>
+                <div>
+                  <h3>Change pack for your {path.label === "Custom site" ? "developer" : `${path.label} site`}</h3>
+                  <p className="small muted">{packCount} on-site change{packCount === 1 ? "" : "s"} in one file, in priority order, with the code ready to paste and where it goes.</p>
+                </div>
+                <a className="btn btn-secondary btn-s" href="/dashboard/recommendations/change-pack">Download change pack</a>
+              </div>
+              {path.connect === "wordpress" && <p className="small muted">On WordPress? <Link href="/dashboard/settings#wordpress">Connect your site</Link> and we can publish these for you.</p>}
+            </section>
+          )}
           {open.length > 0 && <ul className="rec-list">{open.map((r, i) => <RecCard key={r.id} r={r} asset={assets.get(r.asset_refs?.[0])} first={i === 0} />)}</ul>}
           {diy.length > 0 && <><h3>You&apos;re doing these</h3><ul className="rec-list">{diy.map((r) => <RecCard key={r.id} r={r} asset={assets.get(r.asset_refs?.[0])} />)}</ul></>}
           {done.length > 0 && <><h3>Done</h3><ul className="rec-list">{done.map((r) => <RecCard key={r.id} r={r} asset={assets.get(r.asset_refs?.[0])} compact />)}</ul></>}
@@ -76,6 +94,7 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
             : <p className="small muted"><Link href="/dashboard/recommendations?show=dismissed">Show {dismissed.length} dismissed</Link></p>)}
         </>
       )}
+      <ActionsLog log={log} />
     </DashboardShell>
   );
 }
@@ -143,5 +162,34 @@ function RecCard({ r, asset, first, compact }: { r: Rec; asset?: Asset; first?: 
         {r.status !== "open" && <StatusButton id={r.id} status="open" label="Move back to to-do" />}
       </div>
     </li>
+  );
+}
+
+const PATH: Record<string, string> = { offsite: "Off your site", wordpress: "WordPress", shopify: "Shopify", webflow: "Webflow", wix: "Wix", squarespace: "Squarespace", change_pack: "Change pack" };
+const ACT: Record<string, string> = { planned: "Planned", in_progress: "In progress", done: "Done", failed: "Didn't go through", handed_off: "Handed over" };
+
+/** What changed, where and when — every action on the brand's behalf, newest first. Empty until something happens. */
+function ActionsLog({ log }: { log: Act[] }) {
+  return (
+    <section className="card stack-s" id="log">
+      <h3>What changed</h3>
+      {!log.length ? (
+        <p className="small muted">Nothing yet. When we publish a change, list you on a site, or you download a change pack, it shows here with the date and a link.</p>
+      ) : (
+        <div className="table-wrap"><table className="data-table">
+          <thead><tr><th>When</th><th>Where</th><th>What</th><th>Status</th></tr></thead>
+          <tbody>
+            {log.map((a) => (
+              <tr key={a.id}>
+                <td>{new Date(a.performed_at ?? a.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" })}</td>
+                <td>{PATH[a.path] ?? a.path}</td>
+                <td>{a.url ? <a href={a.url} target="_blank" rel="noopener">{a.description}</a> : a.description}{a.performed_by === "customer" ? <span className="muted"> · by you</span> : a.performed_by ? <span className="muted"> · by The Growth Lab</span> : null}</td>
+                <td>{ACT[a.status] ?? a.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table></div>
+      )}
+    </section>
   );
 }
