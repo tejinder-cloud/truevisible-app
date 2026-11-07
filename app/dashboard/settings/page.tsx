@@ -77,7 +77,7 @@ export default async function SettingsTab({ searchParams }: { searchParams: Prom
         </section>
         <section className="card stack-s" id="plan">
           <h3>Plan</h3>
-          {upgraded && <p className="small" role="status"><strong>Payment received — you&apos;re on Track.</strong> Your questions are now checked every Monday.</p>}
+          {upgraded && subscription?.plan !== "internal" && subscription?.plan !== "trial" && <p className="small" role="status"><strong>Payment received — you&apos;re on Track.</strong> Your questions are now checked every Monday.</p>}
           <dl className="settings">
             <Row label="Plan">{subscription ? PLAN[subscription.plan] ?? subscription.plan : "—"}</Row>
             {subscription?.plan === "trial" && <Row label="Trial">{days == null ? "7 days — starts after our team checks your setup and your first check runs" : days > 0 ? `${days} ${days === 1 ? "day" : "days"} left` : "Ended"}</Row>}
@@ -99,18 +99,6 @@ export default async function SettingsTab({ searchParams }: { searchParams: Prom
           {bill?.razorpay_subscription_id && bill.status === "active" && (
             <form action={cancelTrack}><SubmitButton pending="Cancelling…" variant="secondary">Cancel at end of period</SubmitButton></form>
           )}
-        </section>
-        <section className="card stack-s" id="integrations">
-          <h3>Integrations</h3>
-          <div className="stack-xs">
-            <p className="small"><strong>How changes reach your site</strong> · {path.label}</p>
-            <p className="small muted">{path.how}</p>
-          </div>
-          <dl className="settings">
-            <Row label="Google Analytics 4"><Ga4Card ga4={ga4 as any} configured={ga4Configured()} flash={flash} brandName={brand.name} domain={brand.primary_domain} /></Row>
-            {path.connect === "wordpress" || wp ? <Row label="WordPress"><WordPressCard wp={wp as any} flash={wpFlash} /></Row> : null}
-            <Row label="Google Business Profile"><Soon /></Row>
-          </dl>
         </section>
         <section className="card stack-s" id="email">
           <h3>Email reports</h3>
@@ -136,6 +124,18 @@ export default async function SettingsTab({ searchParams }: { searchParams: Prom
           </dl>
         </section>
       </div>
+      <section className="card stack-m" id="integrations">
+        <div className="stack-xs">
+          <h3>Integrations</h3>
+          <p className="small"><strong>How changes reach your site</strong> · {path.label}</p>
+          <p className="small muted" style={{ maxWidth: 720 }}>{path.how}</p>
+        </div>
+        <div className="grid-2 integrations">
+          <div className="stack-xs"><h4>Google Analytics 4</h4><Ga4Card ga4={ga4 as any} configured={ga4Configured()} flash={flash} brandName={brand.name} domain={brand.primary_domain} /></div>
+          {path.connect === "wordpress" || wp ? <div className="stack-xs"><h4>WordPress</h4><WordPressCard wp={wp as any} flash={wpFlash} /></div> : null}
+          <div className="stack-xs"><h4>Google Business Profile</h4><Soon /></div>
+        </div>
+      </section>
     </DashboardShell>
   );
 }
