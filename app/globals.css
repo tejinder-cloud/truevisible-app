@@ -80,7 +80,7 @@ a { color: inherit; }
 label.field { display: block; }
 label.field > span.label { display: block; font-weight: 600; font-size: 15px; margin-bottom: 6px; }
 label.field > span.hint, .hint { display: block; font-size: 14px; color: var(--text-2); margin-top: 6px; }
-input[type="text"], input[type="email"], input[type="url"], textarea, select {
+input[type="text"], input[type="email"], input[type="url"], input[type="password"], textarea, select {
   width: 100%; font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--hairline);
   border-radius: var(--r-input); padding: 12px 14px; min-height: 48px; transition: border-color var(--dur) var(--ease);
 }
@@ -251,3 +251,5 @@ pre.code { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size:
 .report-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; text-decoration: none; color: var(--text); padding: 16px 20px; }
 .report-row:hover { border-color: var(--text-2); }
 .report-title { font-weight: 600; font-size: 17px; }
+.integrations { align-items: start; }
+.integrations h4 { font-size: 16px; font-weight: 600; margin: 0; }
