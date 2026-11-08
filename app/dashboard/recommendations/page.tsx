@@ -88,7 +88,9 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
                 </div>
                 <a className="btn btn-secondary btn-s" href="/dashboard/recommendations/change-pack">Download change pack</a>
               </div>
-              {path.connect === "wordpress" && <p className="small muted">On WordPress? <Link href="/dashboard/settings#wordpress">Connect your site</Link> and we can publish these for you.</p>}
+              {path.connect === "wordpress" && (wpInt?.status === "connected"
+                ? (wpReady ? <p className="small muted">Your WordPress is connected — pages and FAQs below have a <strong>Draft it on WordPress</strong> button.</p> : null)
+                : <p className="small muted">On WordPress? <Link href="/dashboard/settings#wordpress">Connect your site</Link> and we can publish these for you.</p>)}
             </section>
           )}
           {open.length > 0 && <ul className="rec-list">{open.map((r, i) => <RecCard key={r.id} r={r} asset={assets.get(r.asset_refs?.[0])} first={i === 0} wp={wpByRec.get(r.id)} wpReady={wpReady} />)}</ul>}
