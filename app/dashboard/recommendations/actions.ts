@@ -27,6 +27,8 @@ export async function requestWpPublish(fd: FormData) {
   const { supabase } = await getWorkspace();
   const id = String(fd.get("action") ?? "");
   if (!id) return;
-  await supabase.rpc("tv_wp_request_publish", { p_action: id });
+  let texts: string[] | null = null;
+  try { const t = JSON.parse(String(fd.get("texts") ?? "null")); if (Array.isArray(t) && t.every((x) => typeof x === "string")) texts = t; } catch { texts = null; }
+  await supabase.rpc("tv_wp_request_publish", { p_action: id, p_texts: texts });
   revalidatePath("/dashboard/recommendations");
 }
