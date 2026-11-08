@@ -21,10 +21,10 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // Validates the JWT with Supabase Auth (do not replace with getSession()).
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Refreshes an expired session and verifies the JWT signature (Supabase's recommended check; never getSession()).
+  // With asymmetric signing keys this is local; with the legacy shared secret it falls back to asking Auth.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims?.sub ? { id: data.claims.sub } : null;
 
   const path = request.nextUrl.pathname;
   if (!user && PROTECTED.some((p) => path === p || path.startsWith(p + "/"))) {

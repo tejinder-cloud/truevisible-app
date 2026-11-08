@@ -4,6 +4,8 @@ import { getWorkspace, trialDaysLeft } from "@/lib/workspace";
 import { DashboardShell } from "@/components/DashboardShell";
 import { AnswerText } from "@/components/AnswerText";
 import { AssetActions } from "@/components/AssetActions";
+import { PendingButton } from "@/components/PendingButton";
+import { AutoRefresh } from "@/components/AutoRefresh";
 import { ENGINE_LABEL } from "@/lib/overview";
 import { requestWpDraft, requestWpPublish, setRecommendationStatus } from "./actions";
 import { canPublish, DRAFTABLE, inChangePack, pathFor, wpState, type WpAction } from "@/lib/execution";
@@ -37,6 +39,7 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
   const wpByRec = new Map<string, WpAction>();
   for (const w of (wpRows ?? []) as (WpAction & { recommendation_id: string | null })[]) if (w.recommendation_id && !wpByRec.has(w.recommendation_id)) wpByRec.set(w.recommendation_id, w);
   const wpReady = wpInt?.status === "connected" && canPublish(subscription?.plan);
+  const wpBusy = [...wpByRec.values()].some((w) => ["drafting", "publishing"].includes(wpState(w).key));
   const log = (actionRows ?? []) as Act[];
   const recs = (recRows ?? []) as Rec[];
   const assetIds = recs.flatMap((r) => r.asset_refs ?? []);
@@ -53,6 +56,7 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
 
   return (
     <DashboardShell active="Recommendations" email={user.email} trialDays={trialDaysLeft(subscription)} brandName={brand.name} domain={brand.primary_domain}>
+      <AutoRefresh active={wpBusy} />
       <section className="card ink stack-s">
         <p className="eyebrow" style={{ color: "var(--on-dark)", opacity: 0.75 }}>Managed AEO</p>
         <h2>Rather have us do all of this?</h2>
@@ -133,7 +137,7 @@ function StatusButton({ id, status, label, strong }: { id: string; status: strin
   return (
     <form action={setRecommendationStatus}>
       <input type="hidden" name="id" value={id} /><input type="hidden" name="status" value={status} />
-      <button type="submit" className={strong ? "btn btn-secondary btn-s" : "btn-link small"}>{label}</button>
+      <PendingButton className={strong ? "btn btn-secondary btn-s" : "btn-link small"} pending="Saving…">{label}</PendingButton>
     </form>
   );
 }
@@ -146,7 +150,7 @@ function WpStatus({ wp }: { wp: WpAction }) {
       <div className="row" style={{ gap: 12, flexWrap: "wrap", alignItems: "center" }}>
         {(s.key === "review" || s.key === "blocked") && wp.url && <a className="btn btn-secondary btn-s" href={wp.url} target="_blank" rel="noopener">{s.key === "blocked" ? "Fill in on WordPress" : "Check the draft"}</a>}
         {(s.key === "review" || s.key === "blocked") && (
-          <form action={requestWpPublish}><input type="hidden" name="action" value={wp.id} /><button type="submit" className="btn btn-s">{s.key === "blocked" ? "I've filled them in — publish" : "Publish"}</button></form>
+          <form action={requestWpPublish}><input type="hidden" name="action" value={wp.id} /><PendingButton className="btn btn-s" pending="Sending…">{s.key === "blocked" ? "I've filled them in — publish" : "Publish"}</PendingButton></form>
         )}
         {s.key === "live" && wp.url && <a className="small" href={wp.url} target="_blank" rel="noopener">View the page →</a>}
       </div>
@@ -182,7 +186,7 @@ function RecCard({ r, asset, first, compact, wp, wpReady }: { r: Rec; asset?: As
       {wp && st.key !== "none" && <WpStatus wp={wp} />}
       <div className="row rec-actions" style={{ gap: 16, flexWrap: "wrap", alignItems: "center" }}>
         {canDraft && (
-          <form action={requestWpDraft}><input type="hidden" name="id" value={r.id} /><button type="submit" className="btn btn-s">{st.key === "failed" ? "Try the draft again" : "Draft it on WordPress"}</button></form>
+          <form action={requestWpDraft}><input type="hidden" name="id" value={r.id} /><PendingButton className="btn btn-s" pending="Starting…">{st.key === "failed" ? "Try the draft again" : "Draft it on WordPress"}</PendingButton></form>
         )}
         {r.status === "open" && !wp && <StatusButton id={r.id} status="diy" label="Do it myself" strong />}
         {r.status === "open" && !canDraft && !wp && <a className="btn btn-secondary btn-s" href={`/dashboard/managed/go?from=${r.id}`} target="_blank" rel="noopener">Have us do it</a>}
