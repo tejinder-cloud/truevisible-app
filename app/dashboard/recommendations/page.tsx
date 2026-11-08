@@ -165,7 +165,9 @@ function WpStatus({ wp }: { wp: WpAction }) {
         <div className="table-wrap"><table className="data-table small">
           <thead><tr><th>Page</th><th>Field</th><th>Now</th><th>{s.key === "live" ? "Set to" : "Change to"}</th></tr></thead>
           <tbody>{wp.detail.changes!.map((c, i) => (
-            <tr key={i}><td>{c.link ? <a href={c.link} target="_blank" rel="noopener">{c.page_title}</a> : c.page_title}</td><td>{c.field === "title" ? "SEO title" : "Meta description"}</td><td className="muted">{c.old || "— (theme default)"}</td><td>{c.new} <span className="muted">({c.new.length})</span></td></tr>
+            <tr key={i}><td>{c.link ? <a href={c.link} target="_blank" rel="noopener">{c.page_title}</a> : c.page_title}</td><td>{c.field === "title" ? "SEO title" : "Meta description"}</td><td className="muted">{c.old || "— (theme default)"}</td><td>{c.new} {c.new.length > (c.field === "title" ? 60 : 160)
+              ? <span className="small" style={{ color: "var(--coral-dark)" }}>({c.new.length} — Google shows about {c.field === "title" ? 60 : 155}; the end will be cut)</span>
+              : <span className="muted">({c.new.length})</span>}</td></tr>
           ))}</tbody>
         </table></div>
       )}
