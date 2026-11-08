@@ -7,6 +7,7 @@ import { AssetActions } from "@/components/AssetActions";
 import { PendingButton } from "@/components/PendingButton";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { Elapsed } from "@/components/Elapsed";
+import { MetaEditForm } from "@/components/MetaEditForm";
 import { ENGINE_LABEL } from "@/lib/overview";
 import { requestWpDraft, requestWpPublish, setRecommendationStatus } from "./actions";
 import { canPublish, DRAFTABLE, inChangePack, pathFor, publishAs, wpState, type WpAction } from "@/lib/execution";
@@ -161,7 +162,8 @@ function WpStatus({ wp }: { wp: WpAction }) {
         <strong>WordPress:</strong> {s.key === "drafting" || s.key === "publishing" ? <span className="spinner" aria-hidden="true" /> : null}{s.text}
         {(s.key === "drafting" || s.key === "publishing") && (wp.detail?.approved_at || wp.created_at) ? <> · <Elapsed since={(s.key === "publishing" ? wp.detail?.approved_at : null) ?? wp.created_at!} /></> : null}
       </p>
-      {wp.detail?.wp_type === "meta" && (wp.detail.changes?.length ?? 0) > 0 && s.key !== "drafting" && (
+      {wp.detail?.wp_type === "meta" && s.key === "review" && (wp.detail.changes?.length ?? 0) > 0 && <MetaEditForm actionId={wp.id} changes={wp.detail.changes!} action={requestWpPublish} />}
+      {wp.detail?.wp_type === "meta" && (wp.detail.changes?.length ?? 0) > 0 && s.key !== "drafting" && s.key !== "review" && (
         <div className="table-wrap"><table className="data-table small">
           <thead><tr><th>Page</th><th>Field</th><th>Now</th><th>{s.key === "live" ? "Set to" : "Change to"}</th></tr></thead>
           <tbody>{wp.detail.changes!.map((c, i) => (
@@ -174,7 +176,7 @@ function WpStatus({ wp }: { wp: WpAction }) {
       {wp.detail?.wp_type === "meta" && (wp.detail.unmatched?.length ?? 0) > 0 && <p className="small muted">Not changed: {wp.detail.unmatched!.join("; ")} — no clear matching page on your site, or the suggestion still has a fill-in.</p>}
       <div className="row" style={{ gap: 12, flexWrap: "wrap", alignItems: "center" }}>
         {(s.key === "review" || s.key === "blocked") && wp.url && <a className="btn btn-secondary btn-s" href={wp.url} target="_blank" rel="noopener">{s.key === "blocked" ? "Fill in on WordPress" : "Check the draft"}</a>}
-        {(s.key === "review" || s.key === "blocked") && (
+        {(s.key === "review" || s.key === "blocked") && wp.detail?.wp_type !== "meta" && (
           <form action={requestWpPublish}><input type="hidden" name="action" value={wp.id} /><PendingButton className="btn btn-s" pending="Sending…">{wp.detail?.wp_type === "meta" ? "Apply these" : s.key === "blocked" ? "I've filled them in — publish" : "Publish"}</PendingButton></form>
         )}
         {s.key === "live" && wp.url && wp.detail?.wp_type !== "meta" && <a className="small" href={wp.url} target="_blank" rel="noopener">View the page →</a>}
