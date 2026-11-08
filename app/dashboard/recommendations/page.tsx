@@ -185,7 +185,7 @@ function RecCard({ r, asset, first, compact, wp, wpReady }: { r: Rec; asset?: As
           <form action={requestWpDraft}><input type="hidden" name="id" value={r.id} /><button type="submit" className="btn btn-s">{st.key === "failed" ? "Try the draft again" : "Draft it on WordPress"}</button></form>
         )}
         {r.status === "open" && !wp && <StatusButton id={r.id} status="diy" label="Do it myself" strong />}
-        {r.status === "open" && !wpReady && <a className="btn btn-secondary btn-s" href={`/dashboard/managed/go?from=${r.id}`} target="_blank" rel="noopener">Have us do it</a>}
+        {r.status === "open" && !canDraft && !wp && <a className="btn btn-secondary btn-s" href={`/dashboard/managed/go?from=${r.id}`} target="_blank" rel="noopener">Have us do it</a>}
         {(r.status === "open" || r.status === "diy") && <StatusButton id={r.id} status="done" label="Mark done" />}
         {r.status === "open" && <StatusButton id={r.id} status="dismissed" label="Not relevant" />}
         {r.status !== "open" && <StatusButton id={r.id} status="open" label="Move back to to-do" />}
