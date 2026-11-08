@@ -6,6 +6,7 @@ import { AnswerText } from "@/components/AnswerText";
 import { AssetActions } from "@/components/AssetActions";
 import { PendingButton } from "@/components/PendingButton";
 import { AutoRefresh } from "@/components/AutoRefresh";
+import { Elapsed } from "@/components/Elapsed";
 import { ENGINE_LABEL } from "@/lib/overview";
 import { requestWpDraft, requestWpPublish, setRecommendationStatus } from "./actions";
 import { canPublish, DRAFTABLE, inChangePack, pathFor, wpState, type WpAction } from "@/lib/execution";
@@ -33,7 +34,7 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
     supabase.from("recommendations").select("id, title, body, impact, ease, priority, status, category, evidence, asset_refs, created_at").eq("brand_id", brand.id).neq("status", "superseded").order("priority", { ascending: false }).order("created_at", { ascending: false }),
     supabase.from("v_visibility_daily").select("run_date").eq("brand_id", brand.id).order("run_date", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("actions").select("id, path, description, status, performed_by, performed_at, created_at, url").eq("brand_id", brand.id).order("created_at", { ascending: false }).limit(20),
-    supabase.from("actions").select("id, recommendation_id, status, url, detail").eq("brand_id", brand.id).eq("path", "wordpress").order("created_at", { ascending: false }),
+    supabase.from("actions").select("id, recommendation_id, status, url, detail, created_at").eq("brand_id", brand.id).eq("path", "wordpress").order("created_at", { ascending: false }),
     supabase.from("integrations").select("status").eq("brand_id", brand.id).eq("provider", "wordpress").maybeSingle(),
   ]);
   const wpByRec = new Map<string, WpAction>();
@@ -146,7 +147,10 @@ function WpStatus({ wp }: { wp: WpAction }) {
   const s = wpState(wp);
   return (
     <div className="wp-status stack-xs" role="status">
-      <p className="small"><strong>WordPress:</strong> {s.text}</p>
+      <p className="small">
+        <strong>WordPress:</strong> {s.key === "drafting" || s.key === "publishing" ? <span className="spinner" aria-hidden="true" /> : null}{s.text}
+        {(s.key === "drafting" || s.key === "publishing") && (wp.detail?.approved_at || wp.created_at) ? <> · <Elapsed since={(s.key === "publishing" ? wp.detail?.approved_at : null) ?? wp.created_at!} /></> : null}
+      </p>
       <div className="row" style={{ gap: 12, flexWrap: "wrap", alignItems: "center" }}>
         {(s.key === "review" || s.key === "blocked") && wp.url && <a className="btn btn-secondary btn-s" href={wp.url} target="_blank" rel="noopener">{s.key === "blocked" ? "Fill in on WordPress" : "Check the draft"}</a>}
         {(s.key === "review" || s.key === "blocked") && (

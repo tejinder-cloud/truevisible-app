@@ -259,3 +259,4 @@ pre.code { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size:
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2s; } }
 button[disabled] { cursor: progress; opacity: 0.8; }
+.elapsed { font-variant-numeric: tabular-nums; font-weight: 600; }

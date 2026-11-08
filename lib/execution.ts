@@ -67,19 +67,19 @@ export const changePackFilename = (brand: string, date: string) => `${brand.toLo
 export const canPublish = (plan: string | null | undefined) => ["internal", "managed", "managed_plus", "managed_aeo", "agency_managed_aeo"].includes(plan ?? "");
 export const DRAFTABLE = new Set(["page_draft", "faq_block"]);
 
-export type WpAction = { id: string; status: string; url: string | null; detail: { step?: string; placeholders?: string[]; error?: string | null; blocked_at?: string } | null };
+export type WpAction = { id: string; status: string; url: string | null; created_at?: string; detail: { step?: string; placeholders?: string[]; error?: string | null; blocked_at?: string; approved_at?: string } | null };
 /** Where a recommendation's WordPress work stands, in the customer's words (pure; tested). */
 export function wpState(a: WpAction | undefined): { key: "none" | "drafting" | "review" | "blocked" | "publishing" | "live" | "failed"; text: string } {
   if (!a) return { key: "none", text: "" };
   const step = a.detail?.step;
   if (a.status === "failed") return { key: "failed", text: `Didn't go through: ${a.detail?.error ?? "unknown error"}` };
   if (a.status === "done") return { key: "live", text: "Published on your site" };
-  if (step === "publish") return { key: "publishing", text: "Publishing…" };
+  if (step === "publish") return { key: "publishing", text: "Publishing… (usually under a minute)" };
   if (step === "awaiting_approval") {
     const n = a.detail?.placeholders?.length ?? 0;
     return n
       ? { key: "blocked", text: `Draft is on WordPress. ${n} thing${n === 1 ? "" : "s"} to fill in before it can go live: ${a.detail!.placeholders!.join(", ")}` }
       : { key: "review", text: "Draft is on WordPress — check it, then publish." };
   }
-  return { key: "drafting", text: "Drafting on WordPress… (about a minute)" };
+  return { key: "drafting", text: "Drafting on WordPress… (usually under a minute)" };
 }
