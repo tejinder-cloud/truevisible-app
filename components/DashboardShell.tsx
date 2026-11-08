@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { TabLink } from "@/components/TabLink";
 import { TopBar } from "@/components/TopBar";
 
 // Header + tab bar shared by every dashboard tab. Tabs without a page yet stay visible but inert.
@@ -26,7 +26,7 @@ export function DashboardShell({ active, email, trialDays, brandName, domain, ch
         <nav className="tabs" aria-label="Dashboard">
           {TABS.map((t) =>
             t.label === active ? <span key={t.label} className="active" aria-current="page">{t.label}</span>
-            : t.href ? <Link key={t.label} href={t.href}>{t.label}</Link>
+            : t.href ? <TabLink key={t.label} href={t.href}>{t.label}</TabLink>
             : <span key={t.label} aria-disabled="true" title="Coming in a later build">{t.label}</span>,
           )}
         </nav>

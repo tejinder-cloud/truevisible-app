@@ -7,7 +7,7 @@ export function SubmitButton({ children, pending, variant = "primary", name, val
   const { pending: isPending } = useFormStatus();
   return (
     <button className={`btn btn-${variant}`} type="submit" disabled={isPending} aria-disabled={isPending} name={name} value={value}>
-      {isPending ? pending : children}
+      {isPending ? <><span className="spinner" aria-hidden="true" />{pending}</> : children}
     </button>
   );
 }

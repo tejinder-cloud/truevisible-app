@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,12 +17,14 @@ export type Brand = {
 export type Subscription = { plan: string; status: string; trial_ends_at: string | null; trial_started_at?: string | null; extra_prompts?: number | null };
 
 /** Signed-in user + their tenant (created on first visit) + their brand (if started) + current TrueVisible subscription. */
-export async function getWorkspace() {
+export const getWorkspace = cache(async function getWorkspace() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  // The middleware has already validated the session with Supabase Auth on this request; here the JWT's signature is
+  // checked locally (getClaims), which saves a round trip to Auth on every page.
+  const { data: claims } = await supabase.auth.getClaims();
+  const sub0 = claims?.claims?.sub;
+  if (!sub0) redirect("/login");
+  const user = { id: sub0 as string, email: (claims!.claims.email as string | undefined) ?? null };
 
   const { data: member } = await supabase
     .from("tenant_members")
@@ -59,6 +62,6 @@ export async function getWorkspace() {
   ]);
 
   return { supabase, user, tenantId, brand: (brand as Brand | null) ?? null, subscription: (sub as Subscription | null) ?? null };
-}
+});
 
 export { promptLimit, trialState, trialDaysLeft, type TrialState } from "@/lib/plan";
