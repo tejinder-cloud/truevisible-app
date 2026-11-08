@@ -67,13 +67,13 @@ export const changePackFilename = (brand: string, date: string) => `${brand.toLo
 export const canPublish = (plan: string | null | undefined) => ["internal", "managed", "managed_plus", "managed_aeo", "agency_managed_aeo"].includes(plan ?? "");
 export const DRAFTABLE = new Set(["page_draft", "faq_block"]);
 
-export type WpAction = { id: string; status: string; url: string | null; created_at?: string; detail: { step?: string; placeholders?: string[]; error?: string | null; blocked_at?: string; approved_at?: string } | null };
+export type WpAction = { id: string; status: string; url: string | null; created_at?: string; detail: { step?: string; placeholders?: string[]; error?: string | null; blocked_at?: string; approved_at?: string; wp_type?: string } | null };
 /** Where a recommendation's WordPress work stands, in the customer's words (pure; tested). */
 export function wpState(a: WpAction | undefined): { key: "none" | "drafting" | "review" | "blocked" | "publishing" | "live" | "failed"; text: string } {
   if (!a) return { key: "none", text: "" };
   const step = a.detail?.step;
   if (a.status === "failed") return { key: "failed", text: `Didn't go through: ${a.detail?.error ?? "unknown error"}` };
-  if (a.status === "done") return { key: "live", text: "Published on your site" };
+  if (a.status === "done") return { key: "live", text: `Published on your site as a ${a.detail?.wp_type === "post" ? "blog post" : "page"}` };
   if (step === "publish") return { key: "publishing", text: "Publishing… (usually under a minute)" };
   if (step === "awaiting_approval") {
     const n = a.detail?.placeholders?.length ?? 0;
@@ -82,4 +82,11 @@ export function wpState(a: WpAction | undefined): { key: "none" | "drafting" | "
       : { key: "review", text: "Draft is on WordPress — check it, then publish." };
   }
   return { key: "drafting", text: "Drafting on WordPress… (usually under a minute)" };
+}
+
+/** Page or blog post when the recommender didn't say — same rule as tgl-ops (aeo-execution/implement.ts publishAs). */
+export function publishAs(a: { title: string; body: string }): "page" | "post" {
+  const h1 = (a.body.match(/^#\s+(.+)$/m)?.[1] ?? a.title.replace(/^\//, "").replace(/[-_]+/g, " ")).trim();
+  if (/\b(hub|services?|pricing|case[- ]studies|about|contact|industr(y|ies)|locations?)\b/i.test(a.title)) return "page";
+  return /^(what|why|how|when|which|who|is|are|can|should|does|do|will)\b/i.test(h1) || /\?\s*$/.test(h1) || /\b(guide|vs\.?|versus|explained|checklist|tips)\b/i.test(h1) ? "post" : "page";
 }
