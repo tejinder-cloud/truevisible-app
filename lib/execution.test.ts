@@ -51,3 +51,9 @@ test("page or blog post default", () => {
   assert.equal(publishAs({ title: "/case-studies hub (summary page)", body: "# Case studies" }), "page");
   assert.match(wpState({ id: "a", status: "done", url: "u", detail: { wp_type: "post" } }).text, /blog post/);
 });
+
+test("meta states", () => {
+  const ch = [{ label: "Homepage", page_id: 1, page_title: "Home", link: "u", field: "title" as const, old: null, new: "T" }, { label: "Homepage", page_id: 1, page_title: "Home", link: "u", field: "description" as const, old: "a", new: "b" }];
+  assert.match(wpState({ id: "a", status: "in_progress", url: null, detail: { wp_type: "meta", step: "awaiting_approval", changes: ch } }).text, /2 changes on 1 page/);
+  assert.equal(wpState({ id: "a", status: "done", url: null, detail: { wp_type: "meta", changes: ch } }).key, "live");
+});
