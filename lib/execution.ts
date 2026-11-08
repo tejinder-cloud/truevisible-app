@@ -65,14 +65,22 @@ export const changePackFilename = (brand: string, date: string) => `${brand.toLo
 
 /** Publishing to the customer's site is managed work: TGL itself and the managed plans. */
 export const canPublish = (plan: string | null | undefined) => ["internal", "managed", "managed_plus", "managed_aeo", "agency_managed_aeo"].includes(plan ?? "");
-export const DRAFTABLE = new Set(["page_draft", "faq_block"]);
+export const DRAFTABLE = new Set(["page_draft", "faq_block", "meta"]);
 
-export type WpAction = { id: string; status: string; url: string | null; created_at?: string; detail: { step?: string; placeholders?: string[]; error?: string | null; blocked_at?: string; approved_at?: string; wp_type?: string } | null };
+export type WpAction = { id: string; status: string; url: string | null; created_at?: string; detail: { step?: string; placeholders?: string[]; error?: string | null; blocked_at?: string; approved_at?: string; wp_type?: string; changes?: MetaChange[]; unmatched?: string[]; applied?: number } | null };
+export type MetaChange = { label: string; page_id: number; page_title: string; link: string; field: "title" | "description"; old: string | null; new: string };
 /** Where a recommendation's WordPress work stands, in the customer's words (pure; tested). */
 export function wpState(a: WpAction | undefined): { key: "none" | "drafting" | "review" | "blocked" | "publishing" | "live" | "failed"; text: string } {
   if (!a) return { key: "none", text: "" };
   const step = a.detail?.step;
   if (a.status === "failed") return { key: "failed", text: `Didn't go through: ${a.detail?.error ?? "unknown error"}` };
+  if (a.detail?.wp_type === "meta") {
+    const n = new Set((a.detail.changes ?? []).map((c) => c.page_id)).size;
+    if (a.status === "done") return { key: "live", text: `SEO titles & descriptions updated on ${n} page${n === 1 ? "" : "s"}` };
+    if (step === "publish") return { key: "publishing", text: "Applying… (usually under a minute)" };
+    if (step === "awaiting_approval") return { key: "review", text: `Ready: ${a.detail.changes?.length ?? 0} change${(a.detail.changes?.length ?? 0) === 1 ? "" : "s"} on ${n} page${n === 1 ? "" : "s"}. Check them, then apply.` };
+    return { key: "drafting", text: "Reading your pages' current titles… (usually under a minute)" };
+  }
   if (a.status === "done") return { key: "live", text: `Published on your site as a ${a.detail?.wp_type === "post" ? "blog post" : "page"}` };
   if (step === "publish") return { key: "publishing", text: "Publishing… (usually under a minute)" };
   if (step === "awaiting_approval") {

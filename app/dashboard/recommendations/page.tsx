@@ -63,7 +63,7 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
         <section className="card done-banner stack-xs" role="status">
           <h3>✓ Live on your site</h3>
           <ul className="stack-xs" style={{ margin: 0, paddingLeft: 18 }}>
-            {justLive.map((a) => <li key={a.id}>{a.url ? <a href={a.url} target="_blank" rel="noopener">{a.description.replace(/^Published (page|blog post): /, "")}</a> : a.description} <span className="small muted">· {a.description.startsWith("Published blog post") ? "blog post" : "page"} · {new Date(a.performed_at ?? a.created_at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" })}</span></li>)}
+            {justLive.map((a) => <li key={a.id}>{a.url ? <a href={a.url} target="_blank" rel="noopener">{a.description.replace(/^Published (page|blog post): /, "")}</a> : a.description} <span className="small muted">· {a.description.startsWith("Published blog post") ? "blog post" : a.description.startsWith("Updated SEO") ? "SEO titles" : "page"} · {new Date(a.performed_at ?? a.created_at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" })}</span></li>)}
           </ul>
           <p className="small muted">Moved to Done below and listed in <a href="#log">What changed</a>. We&apos;ll see in the coming runs whether AI starts naming you for these questions.</p>
         </section>
@@ -161,12 +161,21 @@ function WpStatus({ wp }: { wp: WpAction }) {
         <strong>WordPress:</strong> {s.key === "drafting" || s.key === "publishing" ? <span className="spinner" aria-hidden="true" /> : null}{s.text}
         {(s.key === "drafting" || s.key === "publishing") && (wp.detail?.approved_at || wp.created_at) ? <> · <Elapsed since={(s.key === "publishing" ? wp.detail?.approved_at : null) ?? wp.created_at!} /></> : null}
       </p>
+      {wp.detail?.wp_type === "meta" && (wp.detail.changes?.length ?? 0) > 0 && s.key !== "drafting" && (
+        <div className="table-wrap"><table className="data-table small">
+          <thead><tr><th>Page</th><th>Field</th><th>Now</th><th>{s.key === "live" ? "Set to" : "Change to"}</th></tr></thead>
+          <tbody>{wp.detail.changes!.map((c, i) => (
+            <tr key={i}><td>{c.link ? <a href={c.link} target="_blank" rel="noopener">{c.page_title}</a> : c.page_title}</td><td>{c.field === "title" ? "SEO title" : "Meta description"}</td><td className="muted">{c.old || "— (theme default)"}</td><td>{c.new} <span className="muted">({c.new.length})</span></td></tr>
+          ))}</tbody>
+        </table></div>
+      )}
+      {wp.detail?.wp_type === "meta" && (wp.detail.unmatched?.length ?? 0) > 0 && <p className="small muted">Not changed: {wp.detail.unmatched!.join("; ")} — no clear matching page on your site, or the suggestion still has a fill-in.</p>}
       <div className="row" style={{ gap: 12, flexWrap: "wrap", alignItems: "center" }}>
         {(s.key === "review" || s.key === "blocked") && wp.url && <a className="btn btn-secondary btn-s" href={wp.url} target="_blank" rel="noopener">{s.key === "blocked" ? "Fill in on WordPress" : "Check the draft"}</a>}
         {(s.key === "review" || s.key === "blocked") && (
-          <form action={requestWpPublish}><input type="hidden" name="action" value={wp.id} /><PendingButton className="btn btn-s" pending="Sending…">{s.key === "blocked" ? "I've filled them in — publish" : "Publish"}</PendingButton></form>
+          <form action={requestWpPublish}><input type="hidden" name="action" value={wp.id} /><PendingButton className="btn btn-s" pending="Sending…">{wp.detail?.wp_type === "meta" ? "Apply these" : s.key === "blocked" ? "I've filled them in — publish" : "Publish"}</PendingButton></form>
         )}
-        {s.key === "live" && wp.url && <a className="small" href={wp.url} target="_blank" rel="noopener">View the page →</a>}
+        {s.key === "live" && wp.url && wp.detail?.wp_type !== "meta" && <a className="small" href={wp.url} target="_blank" rel="noopener">View the page →</a>}
       </div>
     </div>
   );
@@ -209,8 +218,8 @@ function RecCard({ r, asset, first, compact, wp, wpReady }: { r: Rec; asset?: As
                   <option value="post">a blog post</option>
                 </select>
               </label>
-            ) : <input type="hidden" name="as" value="page" />}
-            <PendingButton className="btn btn-s" pending="Starting…">{st.key === "failed" ? "Try the draft again" : "Draft it on WordPress"}</PendingButton>
+            ) : asset!.kind === "meta" ? null : <input type="hidden" name="as" value="page" />}
+            <PendingButton className="btn btn-s" pending="Starting…">{asset!.kind === "meta" ? (st.key === "failed" ? "Try again" : "Set these on WordPress") : st.key === "failed" ? "Try the draft again" : "Draft it on WordPress"}</PendingButton>
           </form>
         )}
         {r.status === "open" && !wp && <StatusButton id={r.id} status="diy" label="Do it myself" strong />}
