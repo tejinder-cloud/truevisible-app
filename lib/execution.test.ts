@@ -29,7 +29,7 @@ test("change pack markdown: numbered, code fenced, platform hint, empty state", 
   assert.equal(changePackFilename("The Growth Lab", "2026-11-07"), "the-growth-lab-change-pack-2026-11-07.md");
 });
 
-import { canPublish, wpState } from "./execution";
+import { canPublish, publishAs, wpState } from "./execution";
 test("publishing is for TGL and managed plans; WordPress states read plainly", () => {
   assert.equal(canPublish("internal"), true);
   assert.equal(canPublish("managed_plus"), true);
@@ -43,4 +43,11 @@ test("publishing is for TGL and managed plans; WordPress states read plainly", (
   assert.equal(wpState({ id: "a", status: "planned", url: "u", detail: { step: "publish" } }).key, "publishing");
   assert.equal(wpState({ id: "a", status: "done", url: "u", detail: {} }).key, "live");
   assert.match(wpState({ id: "a", status: "failed", url: null, detail: { error: "tool needs content" } }).text, /tool needs content/);
+});
+
+test("page or blog post default", () => {
+  assert.equal(publishAs({ title: "/what-is-aeo-geo-ai-visibility-india", body: "# What is AEO and why does your business need AI visibility?" }), "post");
+  assert.equal(publishAs({ title: "/ai-automation-whatsapp-crm-lead-scoring", body: "# AI automation for leads: WhatsApp, CRM and lead scoring" }), "page");
+  assert.equal(publishAs({ title: "/case-studies hub (summary page)", body: "# Case studies" }), "page");
+  assert.match(wpState({ id: "a", status: "done", url: "u", detail: { wp_type: "post" } }).text, /blog post/);
 });

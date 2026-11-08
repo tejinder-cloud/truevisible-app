@@ -260,3 +260,6 @@ pre.code { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size:
 @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2s; } }
 button[disabled] { cursor: progress; opacity: 0.8; }
 .elapsed { font-variant-numeric: tabular-nums; font-weight: 600; }
+.done-banner { border: 1px solid var(--coral); }
+.done-banner h3 { font-size: 18px; }
+.select-s { min-height: 36px; padding: 4px 10px; font-size: 14px; width: auto; }

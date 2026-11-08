@@ -18,7 +18,8 @@ export async function requestWpDraft(fd: FormData) {
   const { supabase } = await getWorkspace();
   const id = String(fd.get("id") ?? "");
   if (!id) return;
-  await supabase.rpc("tv_wp_request_draft", { p_rec: id });
+  const as = String(fd.get("as") ?? "");
+  await supabase.rpc("tv_wp_request_draft", { p_rec: id, p_as: as === "post" || as === "page" ? as : null });
   revalidatePath("/dashboard/recommendations");
 }
 

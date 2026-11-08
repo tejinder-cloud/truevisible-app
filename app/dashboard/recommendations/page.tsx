@@ -9,7 +9,7 @@ import { AutoRefresh } from "@/components/AutoRefresh";
 import { Elapsed } from "@/components/Elapsed";
 import { ENGINE_LABEL } from "@/lib/overview";
 import { requestWpDraft, requestWpPublish, setRecommendationStatus } from "./actions";
-import { canPublish, DRAFTABLE, inChangePack, pathFor, wpState, type WpAction } from "@/lib/execution";
+import { canPublish, DRAFTABLE, inChangePack, pathFor, publishAs, wpState, type WpAction } from "@/lib/execution";
 
 export const metadata = { title: "Recommendations" };
 const KIND: Record<string, string> = {
@@ -42,6 +42,7 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
   const wpReady = wpInt?.status === "connected" && canPublish(subscription?.plan);
   const wpBusy = [...wpByRec.values()].some((w) => ["drafting", "publishing"].includes(wpState(w).key));
   const log = (actionRows ?? []) as Act[];
+  const justLive = log.filter((a) => a.path === "wordpress" && a.status === "done" && Date.now() - new Date(a.performed_at ?? a.created_at).getTime() < 24 * 3600_000);
   const recs = (recRows ?? []) as Rec[];
   const assetIds = recs.flatMap((r) => r.asset_refs ?? []);
   const { data: assetRows } = assetIds.length ? await supabase.from("assets").select("id, kind, title, content").in("id", assetIds) : { data: [] };
@@ -58,6 +59,15 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
   return (
     <DashboardShell active="Recommendations" email={user.email} trialDays={trialDaysLeft(subscription)} brandName={brand.name} domain={brand.primary_domain}>
       <AutoRefresh active={wpBusy} />
+      {justLive.length > 0 && (
+        <section className="card done-banner stack-xs" role="status">
+          <h3>✓ Live on your site</h3>
+          <ul className="stack-xs" style={{ margin: 0, paddingLeft: 18 }}>
+            {justLive.map((a) => <li key={a.id}>{a.url ? <a href={a.url} target="_blank" rel="noopener">{a.description.replace(/^Published (page|blog post): /, "")}</a> : a.description} <span className="small muted">· {a.description.startsWith("Published blog post") ? "blog post" : "page"} · {new Date(a.performed_at ?? a.created_at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" })}</span></li>)}
+          </ul>
+          <p className="small muted">Moved to Done below and listed in <a href="#log">What changed</a>. We&apos;ll see in the coming runs whether AI starts naming you for these questions.</p>
+        </section>
+      )}
       <section className="card ink stack-s">
         <p className="eyebrow" style={{ color: "var(--on-dark)", opacity: 0.75 }}>Managed AEO</p>
         <h2>Rather have us do all of this?</h2>
@@ -190,7 +200,18 @@ function RecCard({ r, asset, first, compact, wp, wpReady }: { r: Rec; asset?: As
       {wp && st.key !== "none" && <WpStatus wp={wp} />}
       <div className="row rec-actions" style={{ gap: 16, flexWrap: "wrap", alignItems: "center" }}>
         {canDraft && (
-          <form action={requestWpDraft}><input type="hidden" name="id" value={r.id} /><PendingButton className="btn btn-s" pending="Starting…">{st.key === "failed" ? "Try the draft again" : "Draft it on WordPress"}</PendingButton></form>
+          <form action={requestWpDraft} className="row" style={{ gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <input type="hidden" name="id" value={r.id} />
+            {asset!.kind === "page_draft" ? (
+              <label className="small row" style={{ gap: 6, alignItems: "center" }}>As
+                <select name="as" defaultValue={(asset!.content as any)?.publish_as ?? publishAs({ title: asset!.title, body: body })} className="select-s" title="Page: a service or hub that belongs in your menu. Blog post: an article that explains or answers a question.">
+                  <option value="page">a page</option>
+                  <option value="post">a blog post</option>
+                </select>
+              </label>
+            ) : <input type="hidden" name="as" value="page" />}
+            <PendingButton className="btn btn-s" pending="Starting…">{st.key === "failed" ? "Try the draft again" : "Draft it on WordPress"}</PendingButton>
+          </form>
         )}
         {r.status === "open" && !wp && <StatusButton id={r.id} status="diy" label="Do it myself" strong />}
         {r.status === "open" && !canDraft && !wp && <a className="btn btn-secondary btn-s" href={`/dashboard/managed/go?from=${r.id}`} target="_blank" rel="noopener">Have us do it</a>}
