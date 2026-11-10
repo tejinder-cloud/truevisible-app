@@ -90,9 +90,9 @@ import { isApproved, legalFacts, legalText, LEGAL_VERSION, missingFacts } from "
 test("legal: details from env, gaps visible, draft until approved", () => {
   const env = { LEGAL_ADDRESS: "Mohali, Punjab", LEGAL_EMAIL: "hello@x.in" };
   const t = legalText("contact", env);
-  assert.match(t, /Falkan Media/); assert.match(t, /Mohali, Punjab/); assert.match(t, /\[to be added\]/); assert.doesNotMatch(t, /\{\{/);
+  assert.match(t, /Falkan Media/); assert.match(t, /Mohali, Punjab/); assert.match(t, /04BCLPS3803B1ZY/); assert.doesNotMatch(t, /\{\{/);
   for (const d of ["terms", "privacy", "refunds"] as const) assert.doesNotMatch(legalText(d, env), /\{\{/);
-  assert.ok(missingFacts(legalFacts(env)).includes("gstin"));
+  assert.deepEqual(missingFacts(legalFacts(env)), []);
   assert.equal(isApproved({}), false); assert.equal(isApproved({ LEGAL_APPROVED_VERSION: LEGAL_VERSION }), true);
   assert.match(legalText("terms", env), /do not guarantee that any AI assistant will name/);
 });
