@@ -78,3 +78,10 @@ test("plan text: internal codes stripped", () => {
   assert.equal(stripRefs("Use the same names everywhere (S1, S4, S6). This is aimed at P2."), "Use the same names everywhere.");
   assert.equal(stripRefs("Hospitals in PS2 and Rs 3999"), "Hospitals in PS2 and Rs 3999");
 });
+
+import { refLabel, winsChange } from "./competitors";
+test("competitor refs and change", () => {
+  const r = { name: "Dovetail", tracked: true, answers: 5, winsOverYou: 4, engines: [], questions: [{ prompt: "best AEO agency", answers: 2 }], sites: [{ domain: "sortlist.com", answers: 3 }] };
+  assert.equal(refLabel("Q1", r), "“best AEO agency”"); assert.equal(refLabel("S1", r), "sortlist.com"); assert.equal(refLabel("S2", r), null); assert.equal(refLabel("x", r), null);
+  assert.equal(winsChange(r, [{ ...r, winsOverYou: 1 }]), 3); assert.equal(winsChange(r, null), null); assert.equal(winsChange(r, [{ ...r, name: "Other" }]), null);
+});
