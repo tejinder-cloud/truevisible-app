@@ -99,8 +99,10 @@ export default async function RecommendationsTab({ searchParams }: { searchParam
             <section className="card stack-xs">
               <div className="spread" style={{ gap: 12, flexWrap: "wrap" }}>
                 <div>
-                  <h3>Change pack for your {path.label === "Custom site" ? "developer" : `${path.label} site`}</h3>
-                  <p className="small muted">{packCount} on-site change{packCount === 1 ? "" : "s"} in one file, in priority order, with the code ready to paste and where it goes.</p>
+                  <h3>{path.label === "No website" ? "Change pack for your first website" : `Change pack for your ${path.label === "Custom site" ? "developer" : `${path.label} site`}`}</h3>
+                  <p className="small muted">{path.label === "No website"
+                    ? `${packCount} page${packCount === 1 ? "" : "s"} to start your website with, in one file, ready to hand to whoever builds it.`
+                    : `${packCount} on-site change${packCount === 1 ? "" : "s"} in one file, in priority order, with the code ready to paste and where it goes.`}</p>
                 </div>
                 <a className="btn btn-secondary btn-s" href="/dashboard/recommendations/change-pack">Download change pack</a>
               </div>
@@ -137,7 +139,7 @@ function Evidence({ ev }: { ev: any }) {
       ))}
       {sites.map((s) => (
         <li key={s.domain}>
-          <span className="muted">Site:</span> {s.domain} — cited in {s.answers_without_you} answers that didn&apos;t name you{s.competitor_named ? `, ${s.competitor_named} of them naming ${s.competitors.join(", ")}` : ""}
+          <span className="muted">Site:</span> {s.domain} — cited in {s.answers_without_you} answer{s.answers_without_you === 1 ? "" : "s"} that didn&apos;t name you{s.competitor_named ? `, ${s.competitor_named} of them naming ${s.competitors.join(", ")}` : ""}
         </li>
       ))}
       {ev?.period && <li className="muted">Measured {fmt(ev.period.from)} – {fmt(ev.period.to)}</li>}

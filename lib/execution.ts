@@ -9,7 +9,7 @@ export const EXECUTION_PATH: Record<string, PathInfo> = {
   wix: { label: "Wix", how: "Download the change pack from Recommendations — each change says which Wix panel it goes in." },
   squarespace: { label: "Squarespace", how: "Download the change pack from Recommendations — each change says which Squarespace panel it goes in." },
   custom: { label: "Custom site", how: "Download the change pack from Recommendations and give it to your developer. It lists every change with ready-to-paste code." },
-  none: { label: "No website", how: "Your recommendations focus on listings and sites AI cites. When you have a website, set the platform and the change pack covers it." },
+  none: { label: "No website", how: "Your recommendations focus on listings and sites AI cites, plus at most two pages to start a website with. When you have a website, set the platform and the change pack covers it." },
 };
 export const pathFor = (platform: string | null | undefined): PathInfo => EXECUTION_PATH[platform ?? ""] ?? EXECUTION_PATH.custom;
 
