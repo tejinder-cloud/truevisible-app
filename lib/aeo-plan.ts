@@ -23,3 +23,12 @@ export function itemState(i: PlanItem, week: number, recStatus: Map<string, stri
 export const STATE_LABEL: Record<ItemState, string> = { done: "Done", in_progress: "In progress", this_week: "This week", overdue: "Carried over", planned: "Planned" };
 export const KIND_LABEL: Record<string, string> = { page: "Page", technical: "Technical", outreach: "Outreach", listing: "Listings", gbp: "Google Business Profile", review: "Reviews", measure: "Measure" };
 export const PATH_LABEL: Record<string, string> = { wordpress: "on your WordPress", change_pack: "change pack", offsite: "off your site", gbp: "Google Business Profile", team: "our team" };
+
+/** Same rule as tgl-ops stripRefs: internal evidence codes (P12, S1, R3) never show to the client. */
+export function stripRefs(t: string): string {
+  return t
+    .replace(/\s*\((?:\s*(?:questions?|sites?)?\s*[PSR]\d{1,2}\s*(?:[,/&]|and)?\s*)+\)/gi, "")
+    .replace(/\b(?:(?:this is )?aimed at|for|in|see|covering|answers?|targets?|questions?|sites?)\s+[PSR]\d{1,2}(?:\s*(?:,|and|&|\/)\s*[PSR]\d{1,2})*\b\.?/gi, "")
+    .replace(/\b[PSR]\d{1,2}(?:\s*(?:,|and|&|\/)\s*[PSR]\d{1,2})*\b/g, "")
+    .replace(/\(\s*\)/g, "").replace(/\s+([,.;:])/g, "$1").replace(/([,;])\s*([.;])/g, "$2").replace(/\s{2,}/g, " ").trim();
+}

@@ -58,7 +58,7 @@ test("meta states", () => {
   assert.equal(wpState({ id: "a", status: "done", url: null, detail: { wp_type: "meta", changes: ch } }).key, "live");
 });
 
-import { itemState, planWeek } from "./aeo-plan";
+import { itemState, planWeek, stripRefs } from "./aeo-plan";
 test("plan week and item states", () => {
   assert.equal(planWeek("2026-11-10", "2026-11-09"), 0);
   assert.equal(planWeek("2026-11-10", "2026-11-10"), 1);
@@ -71,4 +71,9 @@ test("plan week and item states", () => {
   assert.equal(itemState(it(2), 2, rs, new Set()), "this_week");
   assert.equal(itemState(it(1), 2, rs, new Set()), "overdue");
   assert.equal(itemState(it(5), 2, rs, new Set()), "planned");
+});
+
+test("plan text: internal codes stripped", () => {
+  assert.equal(stripRefs("Use the same names everywhere (S1, S4, S6). This is aimed at P2."), "Use the same names everywhere.");
+  assert.equal(stripRefs("Hospitals in PS2 and Rs 3999"), "Hospitals in PS2 and Rs 3999");
 });

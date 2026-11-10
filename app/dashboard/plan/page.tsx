@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getWorkspace, trialDaysLeft } from "@/lib/workspace";
 import { DashboardShell } from "@/components/DashboardShell";
 import { canPublish } from "@/lib/execution";
-import { itemState, KIND_LABEL, PATH_LABEL, planWeek, STATE_LABEL, type PlanItem } from "@/lib/aeo-plan";
+import { itemState, KIND_LABEL, PATH_LABEL, planWeek, STATE_LABEL, stripRefs, type PlanItem } from "@/lib/aeo-plan";
 
 export const metadata = { title: "90-day plan" };
 const day = (d: string) => new Date(d + "T00:00:00Z").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" });
@@ -61,6 +61,11 @@ export default async function PlanTab() {
         <p className="muted">{day(plan.starts_on)} – {day(plan.ends_on)} · {week === 0 ? "starts soon" : week > 13 ? "finished" : `week ${week} of 13`} · {done} of {plan.items.length} done</p>
       </section>
 
+      <section className="card stack-xs">
+        <h3>The plan in short</h3>
+        <p style={{ maxWidth: 820 }}>{stripRefs(plan.summary)}</p>
+      </section>
+
       <div className="grid-2">
         <section className="card stack-xs">
           <h3>Where we started</h3>
@@ -73,10 +78,6 @@ export default async function PlanTab() {
           <p className="small">{plan.scope.pages_per_month} new or improved pages · {plan.scope.outreach_per_month} listings or outreach · {plan.scope.gbp_profiles === 1 ? "your Google Business Profile" : `up to ${plan.scope.gbp_profiles} Google Business Profiles`} · {plan.scope.prompts_in_scope} questions tracked</p>
           <p className="small muted">No one can guarantee what AI says. We do the work and measure the answers every week.</p>
         </section>
-        <section className="card stack-xs">
-          <h3>The plan in short</h3>
-          <p className="small">{plan.summary}</p>
-        </section>
       </div>
 
       {plan.months.map((m) => {
@@ -86,14 +87,14 @@ export default async function PlanTab() {
             <div className="stack-xs">
               <p className="eyebrow">Month {m.month}</p>
               <h3>{m.theme}</h3>
-              <p className="small muted">{m.focus}</p>
+              <p className="small muted">{stripRefs(m.focus)}</p>
             </div>
             <div className="table-wrap"><table className="data-table small">
               <thead><tr><th>Week</th><th>What</th><th>Where</th><th>Status</th></tr></thead>
               <tbody>{weeks.map(({ i, s }) => (
                 <tr key={i.id} className={s === "this_week" ? "row-current" : undefined}>
                   <td>{i.week}</td>
-                  <td><strong>{i.title}</strong>{i.count > 1 ? <span className="muted"> ×{i.count}</span> : null}<br /><span className="muted">{i.detail}</span>{i.recommendation_id ? <> · <Link href="/dashboard/recommendations">see it</Link></> : null}</td>
+                  <td><strong>{stripRefs(i.title)}</strong>{i.count > 1 ? <span className="muted"> ×{i.count}</span> : null}<br /><span className="muted">{stripRefs(i.detail)}</span>{i.recommendation_id ? <> · <Link href="/dashboard/recommendations">see it</Link></> : null}</td>
                   <td>{KIND_LABEL[i.kind] ?? i.kind}<br /><span className="muted">{PATH_LABEL[i.path] ?? i.path}</span></td>
                   <td><span className={`chip state-${s}`}>{STATE_LABEL[s]}</span></td>
                 </tr>
