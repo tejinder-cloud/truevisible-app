@@ -67,21 +67,21 @@ export default async function PlanTab() {
       </section>
 
       <section className="card stack-xs">
-        <h3>The plan in short</h3>
-        <p style={{ maxWidth: 820 }}>{stripRefs(plan.summary)}</p>
+        <h3 style={{ textAlign: "center" }}>The Plan In Short</h3>
+        <p style={{ textAlign: "justify", hyphens: "auto" }}>{stripRefs(plan.summary)}</p>
       </section>
 
       <div className="grid-2">
         <section className="card stack-xs">
-          <h3>Where we started</h3>
-          <p>Named in <strong>{b.named ?? "—"}</strong> of {b.answers ?? "—"} AI answers</p>
-          <p className="small muted">Measured {b.from ? day(b.from) : "—"} – {b.to ? day(b.to) : "—"}. Your own site was cited in {b.own_site_cited ?? "—"} answers.{b.competitors_named_most?.length ? ` Named most instead: ${b.competitors_named_most.map((c: any) => c.name).join(", ")}.` : ""}</p>
-          <p className="small"><Link href="/dashboard">See where you are now →</Link></p>
+          <h3 style={{ textAlign: "center" }}>Where We Started</h3>
+          <p style={{ textAlign: "justify" }}>Named in <strong>{b.named ?? "—"}</strong> of {b.answers ?? "—"} AI answers</p>
+          <p className="small muted" style={{ textAlign: "justify" }}>Measured {b.from ? day(b.from) : "—"} – {b.to ? day(b.to) : "—"}. Your own site was cited in {b.own_site_cited ?? "—"} answers.{b.competitors_named_most?.length ? ` Named most instead: ${b.competitors_named_most.map((c: any) => c.name).join(", ")}.` : ""}</p>
+          <p className="small" style={{ textAlign: "justify" }}><Link href="/dashboard">See where you are now →</Link></p>
         </section>
         <section className="card stack-xs">
-          <h3>What's included each month</h3>
-          <p className="small">{plan.scope.pages_per_month} new or improved pages · {plan.scope.outreach_per_month} listings or outreach · {plan.scope.gbp_profiles === 1 ? "your Google Business Profile" : `up to ${plan.scope.gbp_profiles} Google Business Profiles`} · {plan.scope.prompts_in_scope} questions tracked</p>
-          <p className="small muted">No one can guarantee what AI says. We do the work and measure the answers every week.</p>
+          <h3 style={{ textAlign: "center" }}>What&apos;s Included Each Month</h3>
+          <p className="small" style={{ textAlign: "justify" }}>{plan.scope.pages_per_month} new or improved pages · {plan.scope.outreach_per_month} listings or outreach · {plan.scope.gbp_profiles === 1 ? "your Google Business Profile" : `up to ${plan.scope.gbp_profiles} Google Business Profiles`} · {plan.scope.prompts_in_scope} questions tracked</p>
+          <p className="small muted" style={{ textAlign: "justify" }}>No one can guarantee what AI says. We do the work and measure the answers every week.</p>
         </section>
       </div>
 
@@ -100,7 +100,7 @@ export default async function PlanTab() {
                 <tr key={i.id} className={s === "this_week" ? "row-current" : undefined}>
                   <td>{i.week}</td>
                   <td><strong>{stripRefs(i.title)}</strong>{i.count > 1 ? <span className="muted"> ×{i.count}</span> : null}<br /><span className="muted">{stripRefs(i.detail)}</span>{i.recommendation_id ? <> · <Link href="/dashboard/recommendations">see it</Link></> : null}</td>
-                  <td>{KIND_LABEL[i.kind] ?? i.kind}<br /><span className="muted">{PATH_LABEL[i.path] ?? i.path}</span></td>
+                  <td>{KIND_LABEL[i.kind] ?? i.kind}{(PATH_LABEL[i.path] ?? i.path) !== (KIND_LABEL[i.kind] ?? i.kind) ? <><br /><span className="muted">{PATH_LABEL[i.path] ?? i.path}</span></> : null}</td>
                   <td>
                     <span className={`chip state-${s}`}>{STATE_LABEL[s]}</span>
                     {progress.get(i.id) && <div className="small muted" style={{ marginTop: 4 }}>{new Date(progress.get(i.id)!.done_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" })}{progress.get(i.id)!.url ? <> · <a href={progress.get(i.id)!.url!} target="_blank" rel="noopener">proof</a></> : null}</div>}
