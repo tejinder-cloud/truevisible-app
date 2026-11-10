@@ -11,7 +11,8 @@ export function planWeek(startsOn: string, today: string): number {
   return Math.min(14, Math.floor(days / 7) + 1);
 }
 
-export function itemState(i: PlanItem, week: number, recStatus: Map<string, string>, wpBusy: Set<string>): ItemState {
+export function itemState(i: PlanItem, week: number, recStatus: Map<string, string>, wpBusy: Set<string>, marked: Set<string> = new Set()): ItemState {
+  if (marked.has(i.id)) return "done";
   const rs = i.recommendation_id ? recStatus.get(i.recommendation_id) : undefined;
   if (rs === "done" || rs === "managed") return "done";
   if (i.recommendation_id && wpBusy.has(i.recommendation_id)) return "in_progress";
