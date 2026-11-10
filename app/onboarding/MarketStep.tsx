@@ -18,14 +18,14 @@ export function MarketStep({ brandName, initial }: { brandName: string; initial:
       title: <>What should AI <em className="accent">recommend</em> {brandName} for?</>,
       lead: "One product or service to start. You can add more after setup.",
       validate: need("product", "Add the product or service you want to be found for."),
-      body: <input type="text" name="product" aria-label="Product or service" value={product} onChange={(e) => setProduct(e.target.value)} placeholder="e.g. nursing entrance coaching" />,
+      body: <input type="text" name="product" aria-label="Product or service" value={product} onChange={(e) => setProduct(e.target.value)} placeholder="e.g. dental implants" />,
     },
     {
       id: "icp",
       title: <>Who buys {p}?</>,
       lead: "Describe them the way they'd describe themselves.",
       validate: need("icp", "Add who buys it."),
-      body: <input type="text" name="icp" aria-label="Who buys it" defaultValue={initial.icp} placeholder="e.g. BSc nursing aspirants and their parents" />,
+      body: <input type="text" name="icp" aria-label="Who buys it" defaultValue={initial.icp} placeholder="e.g. adults with missing teeth" />,
     },
     {
       id: "location",
@@ -42,7 +42,7 @@ export function MarketStep({ brandName, initial }: { brandName: string; initial:
       lead: "One per line, with their website if you know it. Up to 10.",
       body: (
         <div className="stack-s">
-          <textarea name="competitors" aria-label="Competitors" defaultValue={initial.competitors} rows={5} placeholder={"ABC Academy — abcacademy.in\nXYZ Institute"} />
+          <textarea name="competitors" aria-label="Competitors" defaultValue={initial.competitors} rows={5} placeholder={"Example Dental Clinic — exampledental.in\nAnother Clinic"} />
           <p className="notice">Before your first audit, our setup team checks your category, competitors and prompts against what AI engines actually say, so your report compares you with the right businesses.</p>
         </div>
       ),

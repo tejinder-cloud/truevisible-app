@@ -20,7 +20,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <p className="eyebrow">AI visibility for your brand</p>
           <h1>See what AI says about you, and <em className="accent">fix it</em>.</h1>
           <p className="muted" style={{ fontSize: 18 }}>
-            ChatGPT, Gemini, Perplexity, Google AI Overviews and Copilot — what they say about your business, who they cite instead, and what to do next.
+            ChatGPT, Gemini and Perplexity — what they say about your business, who they cite instead, and what to do next.
           </p>
         </div>
         {error && <p className="notice" role="alert">That sign-in link didn't work — it may have expired or been opened on another device. Request a new one below.</p>}
