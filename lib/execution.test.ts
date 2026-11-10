@@ -79,7 +79,7 @@ test("plan text: internal codes stripped", () => {
   assert.equal(stripRefs("Hospitals in PS2 and Rs 3999"), "Hospitals in PS2 and Rs 3999");
 });
 
-import { refLabel, winsChange } from "./competitors";
+import { refLabel, stripCodes, winsChange } from "./competitors";
 test("competitor refs and change", () => {
   const r = { name: "Dovetail", tracked: true, answers: 5, winsOverYou: 4, engines: [], questions: [{ prompt: "best AEO agency", answers: 2 }], sites: [{ domain: "sortlist.com", answers: 3 }] };
   assert.equal(refLabel("Q1", r), "“best AEO agency”"); assert.equal(refLabel("S1", r), "sortlist.com"); assert.equal(refLabel("S2", r), null); assert.equal(refLabel("x", r), null);
@@ -95,4 +95,8 @@ test("legal: details from env, gaps visible, draft until approved", () => {
   assert.ok(missingFacts(legalFacts(env)).includes("gstin"));
   assert.equal(isApproved({}), false); assert.equal(isApproved({ LEGAL_APPROVED_VERSION: LEGAL_VERSION }), true);
   assert.match(legalText("terms", env), /do not guarantee that any AI assistant will name/);
+});
+
+test("competitor text: codes hidden", () => {
+  assert.equal(stripCodes("On the case-study question (Q3) and the real estate question (Q4), AI still lists them."), "On the case-study question and the real estate question, AI still lists them.");
 });
