@@ -37,7 +37,7 @@ export default async function SettingsTab({ searchParams }: { searchParams: Prom
     supabase.from("competitors").select("name, domain").eq("brand_id", brand.id).eq("status", "active").order("name"),
     supabase.from("prompts").select("id", { count: "exact", head: true }).eq("brand_id", brand.id).eq("status", "active"),
     supabase.from("products_icps").select("product, icp, location").eq("brand_id", brand.id).order("created_at").limit(1).maybeSingle(),
-    supabase.from("tenant_members").select("email_daily, email_weekly").eq("user_id", user.id).eq("tenant_id", brand.tenant_id).maybeSingle(),
+    supabase.from("tenant_members").select("email_daily, email_weekly, email_tips").eq("user_id", user.id).eq("tenant_id", brand.tenant_id).maybeSingle(),
     supabase.from("integrations").select("status, config").eq("brand_id", brand.id).eq("provider", "ga4").maybeSingle(),
     supabase.from("integrations").select("status, config").eq("brand_id", brand.id).eq("provider", "wordpress").neq("status", "revoked").maybeSingle(),
   ]);
@@ -110,6 +110,10 @@ export default async function SettingsTab({ searchParams }: { searchParams: Prom
             <label className="row" style={{ gap: 10, alignItems: "flex-start" }}>
               <input type="checkbox" name="weekly" defaultChecked={me?.email_weekly ?? true} style={{ width: 20, height: 20, marginTop: 2 }} />
               <span><strong>Weekly trend</strong><br /><span className="small muted">Monday morning, the week before</span></span>
+            </label>
+            <label className="row" style={{ gap: 10, alignItems: "flex-start" }}>
+              <input type="checkbox" name="tips" defaultChecked={(me as any)?.email_tips ?? true} style={{ width: 20, height: 20, marginTop: 2 }} />
+              <span><strong>Tips and reminders</strong><br /><span className="small muted">A few short emails: finishing setup, your trial, and what changed while you were away</span></span>
             </label>
             <div><SubmitButton pending="Saving…" variant="secondary">Save</SubmitButton></div>
           </form>
