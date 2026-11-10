@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isApproved, LEGAL_VERSION } from "@/lib/legal";
 
 export type Brand = {
   id: string;
@@ -28,9 +29,12 @@ export const getWorkspace = cache(async function getWorkspace() {
 
   // "Last seen" for the account team (Day 31) runs alongside, and writes at most once an hour.
   const [{ data: member }] = await Promise.all([
-    supabase.from("tenant_members").select("tenant_id").eq("user_id", user.id).order("created_at").limit(1).maybeSingle(),
+    supabase.from("tenant_members").select("tenant_id, terms_version").eq("user_id", user.id).order("created_at").limit(1).maybeSingle(),
     supabase.rpc("tv_touch").then(() => null, () => null),
   ]);
+
+  // Consent (DPDP Act): once the Terms and Privacy Notice are approved, everyone accepts the current version first.
+  if (isApproved() && (member as any)?.terms_version !== LEGAL_VERSION) redirect("/consent");
 
   let tenantId = member?.tenant_id as string | undefined;
   if (!tenantId) {

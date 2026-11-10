@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getWorkspace, promptLimit, trialDaysLeft } from "@/lib/workspace";
 import { DashboardShell } from "@/components/DashboardShell";
 import { SubmitButton } from "@/components/SubmitButton";
-import { saveEmailPrefs } from "./actions";
+import { requestErasure, saveEmailPrefs } from "./actions";
 import { cancelTrack } from "../upgrade/actions";
 import { formatMoney } from "@/lib/billing";
 import { Ga4Card } from "@/components/Ga4Card";
@@ -25,10 +25,11 @@ function Soon() {
   return <span className="muted">Not connected yet · coming soon</span>;
 }
 
-export default async function SettingsTab({ searchParams }: { searchParams: Promise<{ ga4?: string; upgraded?: string; wp?: string; email?: string }> }) {
+export default async function SettingsTab({ searchParams }: { searchParams: Promise<{ ga4?: string; upgraded?: string; wp?: string; email?: string; erase?: string }> }) {
   const { supabase, user, brand, subscription } = await getWorkspace();
   if (!brand || brand.onboarding_step < 4) redirect(`/onboarding?step=${brand?.onboarding_step ?? 1}`);
-  const { ga4: flash, upgraded, wp: wpFlash, email: emailFlash } = await searchParams;
+  const { ga4: flash, upgraded, wp: wpFlash, email: emailFlash, erase } = await searchParams;
+  const { data: openErasure } = await supabase.from("data_requests").select("created_at").eq("status", "received").limit(1).maybeSingle();
   const [{ data: bill }, { data: invoices }] = await Promise.all([
     supabase.from("subscriptions").select("status, price_minor, currency, billing_interval, current_period_end, razorpay_subscription_id").eq("tenant_id", brand.tenant_id).eq("product", "truevisible").is("brand_id", null).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("invoices").select("id, amount_minor, gst_minor, currency, paid_at, created_at").eq("tenant_id", brand.tenant_id).order("created_at", { ascending: false }).limit(12),
@@ -132,6 +133,27 @@ export default async function SettingsTab({ searchParams }: { searchParams: Prom
           </dl>
         </section>
       </div>
+      <section className="card stack-s" id="data">
+        <h3>Your data</h3>
+        <p className="small muted">Under India&apos;s data protection law (DPDP Act) you can see, correct and delete your personal data. Most details you can correct above. <a href="/legal/privacy">Privacy Notice</a></p>
+        <p><a className="btn btn-secondary btn-s" href="/dashboard/data/export">Download your data (JSON)</a></p>
+        {openErasure ? (
+          <p className="small" role="status">Deletion requested on {new Date(openErasure.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" })}. We complete it within 30 days and email you when it&apos;s done.</p>
+        ) : (
+          <details className="small">
+            <summary>Delete your account and data</summary>
+            <form action={requestErasure} className="stack-xs" style={{ marginTop: 8, maxWidth: 420 }}>
+              <p>This closes your workspace and deletes your brand, questions, answers and reports within 30 days. Invoices are kept for 8 years because GST law requires it. Cancel a paid plan first in Plan.</p>
+              <label className="stack-xs"><span>Why are you leaving? (optional)</span><input name="reason" type="text" maxLength={500} /></label>
+              <label className="stack-xs"><span>Type DELETE to confirm</span><input name="confirm" type="text" required autoComplete="off" /></label>
+              <div><SubmitButton pending="Sending…" variant="secondary">Request deletion</SubmitButton></div>
+              {erase === "confirm" && <p role="alert" style={{ color: "var(--coral-dark)" }}>Type DELETE to confirm.</p>}
+              {erase === "error" && <p role="alert" style={{ color: "var(--coral-dark)" }}>Couldn&apos;t send the request — please try again or write to us.</p>}
+            </form>
+          </details>
+        )}
+        {erase === "sent" && <p className="small" role="status" style={{ color: "#2E7D4F" }}>✓ Request received.</p>}
+      </section>
       <section className="card stack-m" id="integrations">
         <div className="stack-xs">
           <h3>Integrations</h3>

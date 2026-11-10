@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TopBar } from "@/components/TopBar";
+import Link from "next/link";
 import { LoginForm } from "./LoginForm";
 
 export const metadata = { title: "Sign in" };
@@ -24,6 +25,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </div>
         {error && <p className="notice" role="alert">That sign-in link didn't work — it may have expired or been opened on another device. Request a new one below.</p>}
         <LoginForm next={next} />
+        <p className="small muted">By continuing you agree to our <Link href="/legal/terms">Terms of Service</Link> and <Link href="/legal/privacy">Privacy Notice</Link>.</p>
       </main>
     </>
   );

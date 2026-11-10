@@ -85,3 +85,14 @@ test("competitor refs and change", () => {
   assert.equal(refLabel("Q1", r), "“best AEO agency”"); assert.equal(refLabel("S1", r), "sortlist.com"); assert.equal(refLabel("S2", r), null); assert.equal(refLabel("x", r), null);
   assert.equal(winsChange(r, [{ ...r, winsOverYou: 1 }]), 3); assert.equal(winsChange(r, null), null); assert.equal(winsChange(r, [{ ...r, name: "Other" }]), null);
 });
+
+import { isApproved, legalFacts, legalText, LEGAL_VERSION, missingFacts } from "./legal";
+test("legal: details from env, gaps visible, draft until approved", () => {
+  const env = { LEGAL_ADDRESS: "Mohali, Punjab", LEGAL_EMAIL: "hello@x.in" };
+  const t = legalText("contact", env);
+  assert.match(t, /Falkan Media/); assert.match(t, /Mohali, Punjab/); assert.match(t, /\[to be added\]/); assert.doesNotMatch(t, /\{\{/);
+  for (const d of ["terms", "privacy", "refunds"] as const) assert.doesNotMatch(legalText(d, env), /\{\{/);
+  assert.ok(missingFacts(legalFacts(env)).includes("gstin"));
+  assert.equal(isApproved({}), false); assert.equal(isApproved({ LEGAL_APPROVED_VERSION: LEGAL_VERSION }), true);
+  assert.match(legalText("terms", env), /do not guarantee that any AI assistant will name/);
+});
