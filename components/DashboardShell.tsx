@@ -1,5 +1,6 @@
 import { TabLink } from "@/components/TabLink";
 import { TopBar } from "@/components/TopBar";
+import { SiteHealthBanner } from "@/components/SiteHealthBanner";
 
 // Header + tab bar shared by every dashboard tab. Tabs without a page yet stay visible but inert.
 const TABS: { label: string; href: string | null }[] = [
@@ -32,6 +33,7 @@ export function DashboardShell({ active, email, trialDays, brandName, domain, ch
             : <span key={t.label} aria-disabled="true" title="Coming in a later build">{t.label}</span>,
           )}
         </nav>
+        <SiteHealthBanner />
         {children}
       </main>
     </>
