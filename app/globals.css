@@ -270,3 +270,4 @@ button[disabled] { cursor: progress; opacity: 0.8; }
 .site-footer { text-align: center; padding: 24px 16px 40px; }
 .site-footer a { color: inherit; }
 .legal h3, .legal h4 { margin-top: 24px; }
+.site-alert { border: 2px solid var(--coral-dark, #B4432C); background: #FBEDE9; }
