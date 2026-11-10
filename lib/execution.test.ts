@@ -71,6 +71,7 @@ test("plan week and item states", () => {
   assert.equal(itemState(it(2), 2, rs, new Set()), "this_week");
   assert.equal(itemState(it(1), 2, rs, new Set()), "overdue");
   assert.equal(itemState(it(5), 2, rs, new Set()), "planned");
+  assert.equal(itemState(it(1), 2, rs, new Set(), new Set(["x"])), "done");
 });
 
 test("plan text: internal codes stripped", () => {

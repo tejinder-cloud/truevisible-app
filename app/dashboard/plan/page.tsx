@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { getWorkspace, trialDaysLeft } from "@/lib/workspace";
 import { DashboardShell } from "@/components/DashboardShell";
 import { canPublish } from "@/lib/execution";
+import { PendingButton } from "@/components/PendingButton";
+import { markPlanItemDone, undoPlanItem } from "./actions";
 import { itemState, KIND_LABEL, PATH_LABEL, planWeek, STATE_LABEL, stripRefs, type PlanItem } from "@/lib/aeo-plan";
 
 export const metadata = { title: "90-day plan" };
@@ -44,13 +46,16 @@ export default async function PlanTab() {
   const todayIst = new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
   const week = planWeek(plan.starts_on, todayIst);
   const recIds = plan.items.map((i) => i.recommendation_id).filter(Boolean) as string[];
-  const [{ data: recs }, { data: acts }] = await Promise.all([
+  const [{ data: recs }, { data: acts }, { data: prog }] = await Promise.all([
     recIds.length ? supabase.from("recommendations").select("id, status").in("id", recIds) : Promise.resolve({ data: [] as any[] }),
     recIds.length ? supabase.from("actions").select("recommendation_id, status").eq("path", "wordpress").in("recommendation_id", recIds).in("status", ["planned", "in_progress"]) : Promise.resolve({ data: [] as any[] }),
+    supabase.from("aeo_plan_progress").select("item_id, url, done_at").eq("plan_id", plan.id),
   ]);
+  const progress = new Map(((prog ?? []) as any[]).map((p) => [p.item_id as string, p as { url: string | null; done_at: string }]));
+  const internal = subscription?.plan === "internal";
   const recStatus = new Map(((recs ?? []) as any[]).map((r) => [r.id, r.status]));
   const busy = new Set(((acts ?? []) as any[]).map((a) => a.recommendation_id));
-  const states = plan.items.map((i) => itemState(i, week, recStatus, busy));
+  const states = plan.items.map((i) => itemState(i, week, recStatus, busy, new Set(progress.keys())));
   const done = states.filter((s) => s === "done").length;
   const b = plan.baseline ?? {};
 
@@ -96,7 +101,23 @@ export default async function PlanTab() {
                   <td>{i.week}</td>
                   <td><strong>{stripRefs(i.title)}</strong>{i.count > 1 ? <span className="muted"> ×{i.count}</span> : null}<br /><span className="muted">{stripRefs(i.detail)}</span>{i.recommendation_id ? <> · <Link href="/dashboard/recommendations">see it</Link></> : null}</td>
                   <td>{KIND_LABEL[i.kind] ?? i.kind}<br /><span className="muted">{PATH_LABEL[i.path] ?? i.path}</span></td>
-                  <td><span className={`chip state-${s}`}>{STATE_LABEL[s]}</span></td>
+                  <td>
+                    <span className={`chip state-${s}`}>{STATE_LABEL[s]}</span>
+                    {progress.get(i.id) && <div className="small muted" style={{ marginTop: 4 }}>{new Date(progress.get(i.id)!.done_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" })}{progress.get(i.id)!.url ? <> · <a href={progress.get(i.id)!.url!} target="_blank" rel="noopener">proof</a></> : null}</div>}
+                    {internal && s !== "done" && (
+                      <details className="small" style={{ marginTop: 6 }}>
+                        <summary>Mark done</summary>
+                        <form action={markPlanItemDone} className="stack-xs" style={{ marginTop: 6, minWidth: 180 }}>
+                          <input type="hidden" name="plan" value={plan.id} /><input type="hidden" name="item" value={i.id} />
+                          <input name="url" type="text" inputMode="url" placeholder="Link to proof (optional)" aria-label="Link to proof (optional)" style={{ fontSize: 13 }} />
+                          <PendingButton className="btn btn-s" pending="Saving…">Done</PendingButton>
+                        </form>
+                      </details>
+                    )}
+                    {internal && progress.get(i.id) && (
+                      <form action={undoPlanItem} style={{ marginTop: 4 }}><input type="hidden" name="plan" value={plan.id} /><input type="hidden" name="item" value={i.id} /><PendingButton className="btn-link small" pending="…">Undo</PendingButton></form>
+                    )}
+                  </td>
                 </tr>
               ))}</tbody>
             </table></div>
