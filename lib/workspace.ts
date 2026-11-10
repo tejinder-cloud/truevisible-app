@@ -26,13 +26,11 @@ export const getWorkspace = cache(async function getWorkspace() {
   if (!sub0) redirect("/login");
   const user = { id: sub0 as string, email: (claims!.claims.email as string | undefined) ?? null };
 
-  const { data: member } = await supabase
-    .from("tenant_members")
-    .select("tenant_id")
-    .eq("user_id", user.id)
-    .order("created_at")
-    .limit(1)
-    .maybeSingle();
+  // "Last seen" for the account team (Day 31) runs alongside, and writes at most once an hour.
+  const [{ data: member }] = await Promise.all([
+    supabase.from("tenant_members").select("tenant_id").eq("user_id", user.id).order("created_at").limit(1).maybeSingle(),
+    supabase.rpc("tv_touch").then(() => null, () => null),
+  ]);
 
   let tenantId = member?.tenant_id as string | undefined;
   if (!tenantId) {

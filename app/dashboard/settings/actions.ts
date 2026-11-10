@@ -4,7 +4,7 @@ import { getWorkspace } from "@/lib/workspace";
 
 export async function saveEmailPrefs(fd: FormData) {
   const { supabase } = await getWorkspace();
-  await supabase.rpc("tv_set_email_prefs", { p_daily: fd.get("daily") === "on", p_weekly: fd.get("weekly") === "on" });
+  await supabase.rpc("tv_set_email_prefs", { p_daily: fd.get("daily") === "on", p_weekly: fd.get("weekly") === "on", p_tips: fd.get("tips") === "on" });
   revalidatePath("/dashboard/settings");
 }
 
