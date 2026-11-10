@@ -68,7 +68,7 @@ export default async function PlanTab() {
 
       <section className="card stack-xs">
         <h3 style={{ textAlign: "center" }}>The Plan In Short</h3>
-        <p style={{ textAlign: "justify", hyphens: "auto" }}>{stripRefs(plan.summary)}</p>
+        <p style={{ textAlign: "justify" }}>{stripRefs(plan.summary)}</p>
       </section>
 
       <div className="grid-2">
