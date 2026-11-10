@@ -43,3 +43,11 @@ export async function disconnectWordPress() {
   await supabase.rpc("tv_wp_disconnect", { p_brand: brand.id });
   revalidatePath("/dashboard/settings");
 }
+
+export async function requestErasure(fd: FormData) {
+  const { supabase } = await getWorkspace();
+  const { redirect } = await import("next/navigation");
+  if (String(fd.get("confirm") ?? "").trim().toUpperCase() !== "DELETE") redirect("/dashboard/settings?erase=confirm#data");
+  const { error } = await supabase.rpc("tv_request_erasure", { p_reason: String(fd.get("reason") ?? "") });
+  redirect(`/dashboard/settings?erase=${error ? "error" : "sent"}#data`);
+}

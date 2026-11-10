@@ -15,7 +15,12 @@ export const viewport: Viewport = { themeColor: "#F7F3EC", width: "device-width"
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <footer className="site-footer small muted">
+          <a href="/legal/terms">Terms</a> · <a href="/legal/privacy">Privacy</a> · <a href="/legal/refunds">Cancellation &amp; refunds</a> · <a href="/legal/contact">Contact</a>
+        </footer>
+      </body>
     </html>
   );
 }
