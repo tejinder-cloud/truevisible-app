@@ -29,7 +29,7 @@ export default async function UpgradeTrack() {
         </section>
         <section className="card stack-s">
           {already ? <p>You&apos;re already on a paid plan. <Link href="/dashboard/settings#plan">See your plan →</Link></p>
-            : razorpayConfigured() ? <TrackCheckout />
+            : razorpayConfigured() ? <TrackCheckout exportsOn={!!process.env.LEGAL_LUT_ARN?.trim()} />
             : <p className="muted">Online payment is being switched on. <a href="/dashboard/managed/go?plan=track" target="_blank" rel="noopener">Tell us you want Track</a> and we&apos;ll set it up.</p>}
         </section>
       </div>

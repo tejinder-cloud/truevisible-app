@@ -32,7 +32,7 @@ export default async function SettingsTab({ searchParams }: { searchParams: Prom
   const { data: openErasure } = await supabase.from("data_requests").select("created_at").eq("status", "received").limit(1).maybeSingle();
   const [{ data: bill }, { data: invoices }] = await Promise.all([
     supabase.from("subscriptions").select("status, price_minor, currency, billing_interval, current_period_end, razorpay_subscription_id").eq("tenant_id", brand.tenant_id).eq("product", "truevisible").is("brand_id", null).order("created_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("invoices").select("id, amount_minor, gst_minor, currency, paid_at, created_at").eq("tenant_id", brand.tenant_id).order("created_at", { ascending: false }).limit(12),
+    supabase.from("invoices").select("id, number, pdf_url, amount_minor, gst_minor, currency, paid_at, created_at").eq("tenant_id", brand.tenant_id).order("created_at", { ascending: false }).limit(12),
   ]);
   const [{ data: competitors }, { count: prompts }, { data: market }, { data: me }, { data: ga4 }, { data: wp }] = await Promise.all([
     supabase.from("competitors").select("name, domain").eq("brand_id", brand.id).eq("status", "active").order("name"),
@@ -94,7 +94,7 @@ export default async function SettingsTab({ searchParams }: { searchParams: Prom
           {invoices && invoices.length > 0 && (
             <div className="stack-xs">
               <p className="small muted">Payments</p>
-              <ul className="evidence small">{invoices.map((i) => <li key={i.id}>{new Date(i.paid_at ?? i.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" })} · {formatMoney(Number(i.amount_minor) + Number(i.gst_minor), i.currency)}{Number(i.gst_minor) ? ` (incl. GST ${formatMoney(Number(i.gst_minor), i.currency)})` : ""}</li>)}</ul>
+              <ul className="evidence small">{invoices.map((i) => <li key={i.id}>{new Date(i.paid_at ?? i.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" })} · {formatMoney(Number(i.amount_minor) + Number(i.gst_minor), i.currency)}{Number(i.gst_minor) ? ` (incl. GST ${formatMoney(Number(i.gst_minor), i.currency)})` : ""}{(i as any).pdf_url ? <> · <a href={`/dashboard/invoices/${i.id}/pdf`}>Tax invoice {(i as any).number}</a></> : <span className="muted"> · invoice being prepared</span>}</li>)}</ul>
             </div>
           )}
           {bill?.razorpay_subscription_id && bill.status === "active" && (

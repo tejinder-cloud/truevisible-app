@@ -10,9 +10,12 @@ export const TITLE: Record<DocId, string> = { terms: "Terms of Service", privacy
 export function legalFacts(env: Record<string, string | undefined> = process.env) {
   const v = (k: string, d?: string) => env[k]?.trim() || d || "[to be added]";
   return {
-    name: v("LEGAL_NAME", "Falkan Media"), entity: v("LEGAL_ENTITY"), trading: v("LEGAL_TRADING_AS", "The Growth Lab"), address: v("LEGAL_ADDRESS"),
-    gstin: v("LEGAL_GSTIN"), email: v("LEGAL_EMAIL"), phone: v("LEGAL_PHONE"), officer: v("GRIEVANCE_OFFICER"), officerEmail: v("GRIEVANCE_EMAIL"),
-    courts: v("LEGAL_COURTS", "Sahibzada Ajit Singh Nagar (Mohali), Punjab"),
+    // Architect, 10 Nov 2026.
+    name: v("LEGAL_NAME", "Falkan Media"), entity: v("LEGAL_ENTITY", "a sole proprietorship of Tejinder Singh"), trading: v("LEGAL_TRADING_AS", "The Growth Lab"),
+    address: v("LEGAL_ADDRESS", "709, PSB Complex, Sector 49-A, Chandigarh 160047"), gstin: v("LEGAL_GSTIN", "04BCLPS3803B1ZY"),
+    email: v("LEGAL_EMAIL", "support@thegrowthlab.co.in"), phone: v("LEGAL_PHONE", "+91-9872009997"),
+    officer: v("GRIEVANCE_OFFICER", "Tejinder Singh"), officerEmail: v("GRIEVANCE_EMAIL", "support@thegrowthlab.co.in"),
+    courts: v("LEGAL_COURTS", "Chandigarh"),
   };
 }
 export const isApproved = (env: Record<string, string | undefined> = process.env) => env.LEGAL_APPROVED_VERSION?.trim() === LEGAL_VERSION;

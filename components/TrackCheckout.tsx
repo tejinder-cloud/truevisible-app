@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { confirmTrackCheckout, startTrackCheckout } from "@/app/dashboard/upgrade/actions";
 import { chargeMinor, formatMoney, type Currency, type Interval } from "@/lib/billing";
+import { GST_STATES } from "@/lib/gst-states";
 
 declare global { interface Window { Razorpay?: any } }
 
@@ -16,16 +17,17 @@ function loadScript(): Promise<boolean> {
   });
 }
 
-export function TrackCheckout() {
+export function TrackCheckout({ exportsOn = false }: { exportsOn?: boolean }) {
   const [currency, setCurrency] = useState<Currency>("INR");
   const [interval, setInterval] = useState<Interval>("month");
-  const [gstin, setGstin] = useState(""); const [legal, setLegal] = useState("");
+  const [gstin, setGstin] = useState(""); const [legal, setLegal] = useState(""); const [state, setState] = useState("");
   const [busy, setBusy] = useState(false); const [msg, setMsg] = useState<string | null>(null); const [done, setDone] = useState(false);
   const c = chargeMinor(currency, interval);
 
   async function pay() {
+    if (currency === "INR" && !gstin && !state) { setMsg("Pick your state — it decides the GST on your invoice."); return; }
     setBusy(true); setMsg(null);
-    const r = await startTrackCheckout({ currency, interval, gstin, legalName: legal });
+    const r = await startTrackCheckout({ currency, interval, gstin, legalName: legal, state });
     if (!r.ok) { setBusy(false); setMsg(r.error); return; }
     if (!(await loadScript())) { setBusy(false); setMsg("Couldn't load the payment window. Check your connection and try again."); return; }
     const rz = new window.Razorpay({
@@ -55,7 +57,7 @@ export function TrackCheckout() {
       </fieldset>
       <fieldset className="row" style={{ gap: 8, flexWrap: "wrap", border: 0, padding: 0, margin: 0 }}>
         <legend className="small muted" style={{ marginBottom: 6 }}>Your business is</legend>
-        {(["INR", "USD"] as Currency[]).map((k) => (
+        {(exportsOn ? (["INR", "USD"] as Currency[]) : (["INR"] as Currency[])).map((k) => (
           <button key={k} type="button" className={`chip filter${currency === k ? " on" : ""}`} aria-pressed={currency === k} onClick={() => setCurrency(k)}>
             {k === "INR" ? "In India (₹, GST)" : "Outside India ($, no GST)"}
           </button>
@@ -67,6 +69,13 @@ export function TrackCheckout() {
             <input type="text" value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} maxLength={15} placeholder="03ABCDE1234F1Z5" autoComplete="off" /></label>
           <label className="stack-xs"><span className="small">Business name on invoice <span className="muted">(optional)</span></span>
             <input type="text" value={legal} onChange={(e) => setLegal(e.target.value)} maxLength={200} /></label>
+          {!gstin && (
+            <label className="stack-xs"><span className="small">State <span className="muted">(for the GST on your invoice)</span></span>
+              <select value={state} onChange={(e) => setState(e.target.value)}>
+                <option value="">Choose…</option>
+                {GST_STATES.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+              </select></label>
+          )}
         </div>
       )}
       <div className="card" style={{ padding: 16, background: "var(--cream)" }}>
