@@ -25,10 +25,10 @@ function Soon() {
   return <span className="muted">Not connected yet · coming soon</span>;
 }
 
-export default async function SettingsTab({ searchParams }: { searchParams: Promise<{ ga4?: string; upgraded?: string; wp?: string }> }) {
+export default async function SettingsTab({ searchParams }: { searchParams: Promise<{ ga4?: string; upgraded?: string; wp?: string; email?: string }> }) {
   const { supabase, user, brand, subscription } = await getWorkspace();
   if (!brand || brand.onboarding_step < 4) redirect(`/onboarding?step=${brand?.onboarding_step ?? 1}`);
-  const { ga4: flash, upgraded, wp: wpFlash } = await searchParams;
+  const { ga4: flash, upgraded, wp: wpFlash, email: emailFlash } = await searchParams;
   const [{ data: bill }, { data: invoices }] = await Promise.all([
     supabase.from("subscriptions").select("status, price_minor, currency, billing_interval, current_period_end, razorpay_subscription_id").eq("tenant_id", brand.tenant_id).eq("product", "truevisible").is("brand_id", null).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("invoices").select("id, amount_minor, gst_minor, currency, paid_at, created_at").eq("tenant_id", brand.tenant_id).order("created_at", { ascending: false }).limit(12),
@@ -115,7 +115,11 @@ export default async function SettingsTab({ searchParams }: { searchParams: Prom
               <input type="checkbox" name="tips" defaultChecked={(me as any)?.email_tips ?? true} style={{ width: 20, height: 20, marginTop: 2 }} />
               <span><strong>Tips and reminders</strong><br /><span className="small muted">A few short emails: finishing setup, your trial, and what changed while you were away</span></span>
             </label>
-            <div><SubmitButton pending="Saving…" variant="secondary">Save</SubmitButton></div>
+            <div className="row" style={{ gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+              <SubmitButton pending="Saving…" variant="secondary">Save</SubmitButton>
+              {emailFlash === "saved" && <span className="small" role="status" style={{ color: "#2E7D4F" }}>✓ Saved — your email choices are updated.</span>}
+              {emailFlash === "error" && <span className="small" role="alert" style={{ color: "var(--coral-dark)" }}>Couldn&apos;t save — please try again.</span>}
+            </div>
           </form>
           <p className="small muted">Every report stays in the <a href="/dashboard/reports">Reports</a> tab either way.</p>
         </section>
