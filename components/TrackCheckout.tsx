@@ -85,7 +85,7 @@ export function TrackCheckout({ exportsOn = false }: { exportsOn?: boolean }) {
       </div>
       {msg && <p className="small" role="alert" style={{ color: "var(--coral-dark)" }}>{msg}</p>}
       <div><button type="button" className="btn btn-primary" onClick={pay} disabled={busy}>{busy ? "Opening payment…" : `Pay ${formatMoney(c.total, currency)} with Razorpay`}</button></div>
-      <p className="small muted">Card, UPI or netbanking. Renews automatically; cancel any time in Settings — you keep Track until the end of the period you paid for.</p>
+      <p className="small muted">Card, UPI or netbanking. Renews automatically — if your card isn't accepted for auto-renewal, choose UPI; cancel any time in Settings — you keep Track until the end of the period you paid for.</p>
     </div>
   );
 }
