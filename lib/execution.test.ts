@@ -57,3 +57,18 @@ test("meta states", () => {
   assert.match(wpState({ id: "a", status: "in_progress", url: null, detail: { wp_type: "meta", step: "awaiting_approval", changes: ch } }).text, /2 changes on 1 page/);
   assert.equal(wpState({ id: "a", status: "done", url: null, detail: { wp_type: "meta", changes: ch } }).key, "live");
 });
+
+import { itemState, planWeek } from "./aeo-plan";
+test("plan week and item states", () => {
+  assert.equal(planWeek("2026-11-10", "2026-11-09"), 0);
+  assert.equal(planWeek("2026-11-10", "2026-11-10"), 1);
+  assert.equal(planWeek("2026-11-10", "2026-11-17"), 2);
+  assert.equal(planWeek("2026-11-10", "2027-03-01"), 14);
+  const it = (week: number, rec: string | null = null) => ({ id: "x", week, title: "t", detail: "", kind: "page", path: "wordpress", count: 1, recommendation_id: rec });
+  const rs = new Map([["r-done", "done"], ["r-open", "open"]]);
+  assert.equal(itemState(it(3, "r-done"), 1, rs, new Set()), "done");
+  assert.equal(itemState(it(3, "r-open"), 1, rs, new Set(["r-open"])), "in_progress");
+  assert.equal(itemState(it(2), 2, rs, new Set()), "this_week");
+  assert.equal(itemState(it(1), 2, rs, new Set()), "overdue");
+  assert.equal(itemState(it(5), 2, rs, new Set()), "planned");
+});

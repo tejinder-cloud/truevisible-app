@@ -263,3 +263,7 @@ button[disabled] { cursor: progress; opacity: 0.8; }
 .done-banner { border: 1px solid var(--coral); }
 .done-banner h3 { font-size: 18px; }
 .select-s { min-height: 36px; padding: 4px 10px; font-size: 14px; width: auto; }
+.row-current td { background: rgba(217, 100, 74, 0.06); }
+.state-done { background: #E6F2E8; border-color: #9CC9A6; }
+.state-this_week { border-color: var(--coral); }
+.state-overdue { border-color: #C9A227; }
