@@ -71,7 +71,7 @@ export default async function Report({ params }: { params: Promise<{ id: string 
         <div className="grid-2">
           <section className="card stack-s">
             <h3>Questions without your name</h3>
-            <p>{r(c.unbranded)} answers named you over {c.days} {c.days === 1 ? "day" : "days"}.</p>
+            <p>{r(c.unbranded)} answers named you {rep.kind === "weekly" && c.days === 1 ? "in this week's check" : `over ${c.days} ${c.days === 1 ? "day" : "days"}`}.</p>
             {c.strongest?.length > 0 && <><p className="small muted">Where AI names you</p><ul className="evidence">{c.strongest.map((s: any) => <li key={s.prompt}>“{s.prompt}” — {s.named} of {s.of}</li>)}</ul></>}
             {c.neverNamed?.length > 0 && <><p className="small muted">Never named this week</p><ul className="evidence">{c.neverNamed.map((q: string) => <li key={q}>“{q}”</li>)}</ul></>}
           </section>
