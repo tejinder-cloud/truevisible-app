@@ -17,3 +17,11 @@ export function winsChange(r: Rival, prev: Rival[] | null): number | null {
   const p = prev?.find((x) => x.name.toLowerCase() === r.name.toLowerCase());
   return p ? r.winsOverYou - p.winsOverYou : null;
 }
+
+/** Same rule as tgl-ops stripCodes: evidence codes (Q3, S1, E2) never show to the client. */
+export function stripCodes(t: string): string {
+  return t
+    .replace(/\s*\((?:\s*[QSE]\d{1,2}\s*(?:[,/&]|and)?\s*)+\)/g, "")
+    .replace(/\b[QSE]\d{1,2}(?:\s*(?:,|and|&|\/)\s*[QSE]\d{1,2})*\b/g, "")
+    .replace(/[,;]\s*\)/g, ")").replace(/\(\s*\)/g, "").replace(/\s+([,.;:])/g, "$1").replace(/\.(\s*\.)+/g, ".").replace(/\s{2,}/g, " ").trim();
+}

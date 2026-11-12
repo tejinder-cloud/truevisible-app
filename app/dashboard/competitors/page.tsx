@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getWorkspace, trialDaysLeft } from "@/lib/workspace";
 import { DashboardShell } from "@/components/DashboardShell";
 import { PendingButton } from "@/components/PendingButton";
-import { refLabel, winsChange, type Playbook, type Rival } from "@/lib/competitors";
+import { refLabel, stripCodes, winsChange, type Playbook, type Rival } from "@/lib/competitors";
 import { trackCompetitor } from "./actions";
 
 export const metadata = { title: "Competitors" };
@@ -75,10 +75,10 @@ export default async function CompetitorsTab() {
             <ul className="stack-xs" style={{ margin: 0, paddingLeft: 18 }}>
               {p.why.map((w, i) => {
                 const ev = w.refs.map((x) => refLabel(x, r)).filter(Boolean);
-                return <li key={i}>{w.text}{ev.length ? <span className="small muted"> — evidence: {[...new Set(ev)].join("; ")}</span> : null}</li>;
+                return <li key={i}>{stripCodes(w.text)}{ev.length ? <span className="small muted"> — evidence: {[...new Set(ev)].join("; ")}</span> : null}</li>;
               })}
             </ul>
-            {p.moves.length > 0 && (<><h4>What you can do</h4><ul className="stack-xs" style={{ margin: 0, paddingLeft: 18 }}>{p.moves.map((m, i) => <li key={i}>{m}</li>)}</ul></>)}
+            {p.moves.length > 0 && (<><h4>What you can do</h4><ul className="stack-xs" style={{ margin: 0, paddingLeft: 18 }}>{p.moves.map((m, i) => <li key={i}>{stripCodes(m)}</li>)}</ul></>)}
             <div className="grid-2">
               <div className="stack-xs">
                 <p className="small"><strong>Questions where they&apos;re named and you aren&apos;t</strong></p>
