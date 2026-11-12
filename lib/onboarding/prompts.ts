@@ -16,12 +16,12 @@ type Tpl = { j: Journey; t: (c: Ctx) => string | null };
 const TEMPLATES: Record<Language, Tpl[]> = {
   en: [
     { j: "consideration", t: (c) => `What are the best ${c.product} options in ${c.location} for ${c.icp}?` },
-    { j: "decision", t: (c) => `Which ${c.product} in ${c.location} do ${c.icp} trust most?` },
+    { j: "decision", t: (c) => `Which ${c.product} providers in ${c.location} do ${c.icp} trust most?` },
     { j: "awareness", t: (c) => `How much does ${c.product} cost in ${c.location}?` },
     { j: "consideration", t: (c) => `Compare the top ${c.product} providers in ${c.location}` },
     { j: "decision", t: (c) => `Is ${c.brand} a good choice for ${c.product} in ${c.location}?` },
     { j: "consideration", t: (c) => (c.competitor ? `Alternatives to ${c.competitor} for ${c.product} in ${c.location}` : null) },
-    { j: "awareness", t: (c) => `What should ${c.icp} check before choosing a ${c.product}?` },
+    { j: "awareness", t: (c) => `What should ${c.icp} check before choosing a ${c.product} provider?` },
     { j: "decision", t: (c) => `${c.brand} reviews — is it worth it?` },
   ],
   hinglish: [

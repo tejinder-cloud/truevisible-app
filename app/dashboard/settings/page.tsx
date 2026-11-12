@@ -104,15 +104,15 @@ export default async function SettingsTab({ searchParams }: { searchParams: Prom
         <section className="card stack-s" id="email">
           <h3>Email reports</h3>
           <form action={saveEmailPrefs} className="stack-s">
-            <label className="row" style={{ gap: 10, alignItems: "flex-start" }}>
+            <label className="row" style={{ gap: 10, alignItems: "flex-start", flexWrap: "nowrap" }}>
               <input type="checkbox" name="daily" defaultChecked={me?.email_daily ?? true} style={{ width: 20, height: 20, marginTop: 2 }} />
               <span><strong>Daily digest</strong><br /><span className="small muted">Around 8 AM, only on days something changed</span></span>
             </label>
-            <label className="row" style={{ gap: 10, alignItems: "flex-start" }}>
+            <label className="row" style={{ gap: 10, alignItems: "flex-start", flexWrap: "nowrap" }}>
               <input type="checkbox" name="weekly" defaultChecked={me?.email_weekly ?? true} style={{ width: 20, height: 20, marginTop: 2 }} />
               <span><strong>Weekly trend</strong><br /><span className="small muted">Monday morning, the week before</span></span>
             </label>
-            <label className="row" style={{ gap: 10, alignItems: "flex-start" }}>
+            <label className="row" style={{ gap: 10, alignItems: "flex-start", flexWrap: "nowrap" }}>
               <input type="checkbox" name="tips" defaultChecked={(me as any)?.email_tips ?? true} style={{ width: 20, height: 20, marginTop: 2 }} />
               <span><strong>Tips and reminders</strong><br /><span className="small muted">A few short emails: finishing setup, your trial, and what changed while you were away</span></span>
             </label>

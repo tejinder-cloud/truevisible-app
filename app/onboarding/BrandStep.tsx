@@ -31,7 +31,7 @@ export function BrandStep({ initial }: { initial: Initial }) {
       validate: (fd) => (String(fd.get("name") ?? "").trim().length < 2 ? "Add your brand name." : null),
       body: (
         <input type="text" name="name" aria-label="Brand name" value={name} onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Navkiran Nursing Classes" autoComplete="organization" />
+          placeholder="e.g. Smile Dental Studio" autoComplete="organization" />
       ),
     },
     {

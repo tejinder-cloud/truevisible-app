@@ -21,8 +21,8 @@ export default async function ConsentPage({ searchParams }: { searchParams: Prom
           <li>We never guarantee what AI assistants will say — see the <Link href="/legal/terms" target="_blank">Terms of Service</Link>.</li>
         </ul>
         <form action={acceptTerms} className="stack-s card">
-          <label className="row" style={{ gap: 10, alignItems: "flex-start" }}>
-            <input type="checkbox" name="agree" required style={{ width: 20, height: 20, marginTop: 2 }} />
+          <label style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+            <input type="checkbox" name="agree" required style={{ width: 20, height: 20, marginTop: 2, flex: "0 0 auto" }} />
             <span>I agree to the <Link href="/legal/terms" target="_blank">Terms of Service</Link> and consent to {f.name} processing my personal data as described in the <Link href="/legal/privacy" target="_blank">Privacy Notice</Link>.</span>
           </label>
           {error && <p className="small" role="alert" style={{ color: "var(--coral-dark)" }}>Please tick the box to continue.</p>}
